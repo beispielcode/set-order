@@ -73,6 +73,7 @@ $config = require_once 'config/config.php';
   <script src="utils/Bezier-easing.js"></script>
   <script src="lib/vec.js"></script>
   <script src="lib/matrix.js"></script>
+  <script src="lib/vertex.js"></script>
   <script src="workers/worker-coordinator.js" defer></script>
   <!-- <script src="https://cdn.jsdelivr.net/npm/p5"></script> -->
   <!-- <script src="https://cdn.jsdelivr.net/npm/p5.capture"></script> -->
@@ -105,9 +106,9 @@ $config = require_once 'config/config.php';
     <button id="save-colors">Save colors</button>
     <label for="workers-active">
       Active workers
-      <input type="checkbox" name="workers-active" id="workers-active">
+      <input checked type="checkbox" name="workers-active" id="workers-active">
     </label>
-    <input type="checkbox" name="recorder-toggle" id="recorder-toggle">
+    <input type="checkbox" name="recorder-toggle" id="recorder-toggle" <?= isset($config['recorder']) && $config['recorder'] ? 'checked="true"' : '' ?>>
   </div>
 
   <script>
@@ -142,6 +143,7 @@ $config = require_once 'config/config.php';
       workerActive = workersActiveInput.checked;
       if (workerActive) updateWorkers();
     });
+    let recorder = <?= isset($config['recorder']) && $config['recorder'] ? 'true' : 'false' ?>;
 
     // Update sketch options when library changes
     function updateSketchOptions() {
@@ -179,10 +181,12 @@ $config = require_once 'config/config.php';
 
     recorderToggle.addEventListener('change', () => {
       if (recorderToggle.checked) {
-        sketchLoader.addScript(`https://cdn.jsdelivr.net/npm/p5.capture`);
+        recorder = true;
       } else {
         sketchLoader.removeScript(`https://cdn.jsdelivr.net/npm/p5.capture`);
+        recorder = false;
       }
+      updateConfig('recorder', recorder ? 'true' : 'false');
     })
 
     // post new config to config/config.php

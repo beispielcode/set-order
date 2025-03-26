@@ -42,6 +42,7 @@ const sketchLoader = {
     libScript.onload = () => {
       this.addScript(`sketches/p5-sketches/${sketchName}.js`);
       this.addScript(`utils/p5-helpers.js`);
+      if (recorder) this.addScript("https://cdn.jsdelivr.net/npm/p5.capture");
     };
 
     // Create canvas container

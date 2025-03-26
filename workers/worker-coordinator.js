@@ -1,7 +1,12 @@
-const gridWorker = new Worker("grid-worker.js");
-
+const gridWorker = new Worker("workers/grid-worker.js");
+let structure = {};
 gridWorker.onmessage = function (e) {
-  console.log(e.data);
+  // console.log(e.data);
+
+  if (e.data.type === "grid") {
+    structure.vertices = e.data.grid.map((vertex) => Vertex.fromObject(vertex));
+    structure.type = e.data.gridType;
+  }
 };
 
 function initWorkers() {
@@ -24,8 +29,6 @@ function syncWorkers() {
   );
 }
 
-initWorkers();
-
 function updateWorkers() {
   [gridWorker].forEach((worker) =>
     worker.postMessage({
@@ -35,4 +38,5 @@ function updateWorkers() {
   if (workerActive) requestAnimationFrame(updateWorkers);
 }
 
+initWorkers();
 updateWorkers();
