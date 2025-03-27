@@ -6,5 +6,6 @@ return [
   'author' => 'Miloš Gavrić and Noé Gogniat',
   'last_loaded_sketch' => ['p5', 'sketch-004'],
   'colors' => ['#e6e6e6', '#ffffff', '#0000ff'],
-  'recorder' => 'true',
+  'recorder' => false,
+  'debug' => false,
 ];

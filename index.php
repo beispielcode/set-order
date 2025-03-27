@@ -108,6 +108,10 @@ $config = require_once 'config/config.php';
       Active workers
       <input checked type="checkbox" name="workers-active" id="workers-active">
     </label>
+    <label for="debug-active">
+      Active debug
+      <input checked type="checkbox" name="debug-active" id="debug-active" <?= isset($config['debug']) && $config['debug'] ? 'checked="true"' : '' ?>>
+    </label>
     <input type="checkbox" name="recorder-toggle" id="recorder-toggle" <?= isset($config['recorder']) && $config['recorder'] ? 'checked="true"' : '' ?>>
   </div>
 
@@ -143,6 +147,12 @@ $config = require_once 'config/config.php';
       workerActive = workersActiveInput.checked;
       if (workerActive) updateWorkers();
     });
+    const debugActiveInput = document.getElementById('debug-active');
+    let debugActive = <?= isset($config['debug']) && $config['debug'] ? 'true' : 'false' ?>;
+    debugActiveInput.addEventListener('change', () => {
+      debugActive = debugActiveInput.checked;
+      updateConfig('debug', debugActive ? 'true' : 'false');
+    })
     let recorder = <?= isset($config['recorder']) && $config['recorder'] ? 'true' : 'false' ?>;
 
     // Update sketch options when library changes
@@ -183,7 +193,11 @@ $config = require_once 'config/config.php';
       if (recorderToggle.checked) {
         recorder = true;
       } else {
-        sketchLoader.removeScript(`https://cdn.jsdelivr.net/npm/p5.capture`);
+        try {
+          sketchLoader.removeScript(`https://cdn.jsdelivr.net/npm/p5.capture`);
+        } catch (error) {
+          console.warn('No recorder script found')
+        }
         recorder = false;
       }
       updateConfig('recorder', recorder ? 'true' : 'false');
@@ -210,22 +224,38 @@ $config = require_once 'config/config.php';
     // update config.php
     if (count($data) == 2) {
       $config[$data[0]] = $data[1];
-      // throw new Exception(json_encode($config), 1);
     } elseif (count($data) == 3) {
       $config[$data[0]][$data[1]] = $data[2];
-      // throw new Exception(json_encode($data), 1);
+    }
+
+    function formatValue($value)
+    {
+      if ($value === 'true' || $value === true) {
+        return 'true';
+      } elseif ($value === 'false' || $value === false) {
+        return 'false';
+      } else {
+        return "'$value'";
+      }
     }
 
     // change config file content
     $config_str = "[\n";
     foreach ($config as $key => $value) {
-      $value = gettype($value) == 'array' ? "['" . implode("', '", $value) . "']" : "'$value'";
-      $config_str .= "  '$key' => $value,\n";
+      $formatted_value = '';
+      if (is_array($value)) {
+        $formatted_array = array_map(function ($v) {
+          return formatValue($v);
+        }, $value);
+        $formatted_value = '[' . implode(', ', $formatted_array) . ']';
+      } else {
+        $formatted_value = formatValue($value);
+      }
+      $config_str .= "  '$key' => $formatted_value,\n";
     }
     $config_str .= ']';
-    // $config_str = json_encode($config, JSON_OBJECT_AS_ARRAY | JSON_PRETTY_PRINT);
-    $file_content = "<?php \n
-return $config_str;";
+
+    $file_content = "<?php \n\nreturn $config_str;";
     file_put_contents('config/config.php', $file_content);
   }
 
