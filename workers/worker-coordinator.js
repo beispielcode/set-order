@@ -6,6 +6,7 @@ gridWorker.onmessage = function (e) {
   if (e.data.type === "grid") {
     structure.vertices = e.data.grid.map((vertex) => Vertex.fromObject(vertex));
     structure.type = e.data.gridType;
+    structure.gridSize = e.data.gridSize;
   }
 };
 

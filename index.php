@@ -110,9 +110,9 @@ $config = require_once 'config/config.php';
     </label>
     <label for="debug-active">
       Active debug
-      <input checked type="checkbox" name="debug-active" id="debug-active" <?= isset($config['debug']) && $config['debug'] ? 'checked="true"' : '' ?>>
+      <input type="checkbox" name="debug-active" id="debug-active" <?= isset($config['debug']) && $config['debug'] ? 'checked' : '' ?>>
     </label>
-    <input type="checkbox" name="recorder-toggle" id="recorder-toggle" <?= isset($config['recorder']) && $config['recorder'] ? 'checked="true"' : '' ?>>
+    <input type="checkbox" name="recorder-toggle" id="recorder-toggle" <?= isset($config['recorder']) && $config['recorder'] ? 'checked' : '' ?>>
   </div>
 
   <script>

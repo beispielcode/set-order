@@ -146,7 +146,7 @@ class Grid {
   update(...args) {
     const { gridSize, type, speed } = args;
 
-    if (this.compareGrids(this.grid, this.destGrid)) {
+    if (this.compareGrids(this.destGrid)) {
       console.log("Grids are equal, switching type");
       this.type = this.type === "cartesian" ? "polar" : "cartesian";
       this.destGrid = this.getGrid(this.type);
@@ -155,17 +155,20 @@ class Grid {
 
     // console.log("lerping");
 
-    this.lerpGrid(this.destGrid, speed || 0.025);
+    this.lerpGrid(this.destGrid, speed || 0.0125);
+    // this.lerpGrid(this.destGrid, speed || 0.75);
+    // this.lerpGrid(this.destGrid, speed || 0.075);
   }
-  compareGrids(grid1, grid2) {
-    for (let i = 0; i < grid1.length; i++) {
-      if (!grid1[i].equ(grid2[i])) return false;
+  compareGrids(to) {
+    for (let i = 0; i < this.grid.length; i++) {
+      if (!this.grid[i].equ(to[i])) return false;
     }
     return true;
   }
   lerpGrid(to, t) {
     for (let i = 0; i < this.grid.length; i++) {
       this.grid[i].lerp(to[i], t);
+      // if (!this.grid[i].equ(to[i])) break;
     }
     return this;
   }
@@ -225,6 +228,7 @@ class Grid {
           const dy = y - maxRadius;
           const r = Math.max(Math.abs(dx), Math.abs(dy));
           let neighbors = [];
+          grid[index].addDebug("i", index);
 
           // Center point
           if (r === 0) {
@@ -329,7 +333,6 @@ class Grid {
             }
 
             // Add diagonal neighbors
-            grid[index].addDebug("i", index);
             grid[index].addDebug("dx", dx);
             grid[index].addDebug("dy", dy);
             grid[index].addDebug("gdcXY", gdcXY);
@@ -358,16 +361,13 @@ class Grid {
                 weight: 1,
               });
 
-            if (
-              Math.abs(dx - dx / gdcXY) >= 0 &&
-              Math.abs(dy - dy / gdcXY) >= 0
-            )
+            if (Math.abs(dx - dx / gdcXY) > 0 && Math.abs(dy - dy / gdcXY) > 0)
               neighbors.push({
                 index: index - dx / gdcXY - (dy / gdcXY) * gridSize,
                 weight: 1,
               });
             if (gdcXY == 1) {
-              grid[centerIndex].addNeighbor({ index: index, weight: 1 });
+              // grid[centerIndex].addNeighbor({ index: index, weight: 1 });
             }
           }
 
@@ -410,5 +410,6 @@ function sendGrid() {
     type: "grid",
     grid: grid.toArray(),
     gridType: grid.type,
+    gridSize: grid.gridSize,
   });
 }

@@ -7,5 +7,5 @@ return [
   'last_loaded_sketch' => ['p5', 'sketch-004'],
   'colors' => ['#e6e6e6', '#ffffff', '#0000ff'],
   'recorder' => false,
-  'debug' => false,
+  'debug' => true,
 ];
