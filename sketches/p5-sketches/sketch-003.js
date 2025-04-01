@@ -7,7 +7,7 @@ window.myP5 = new p5((p) => {
   });
   p.setup = function () {
     p.createCanvas(canvasWidth, canvasHeight);
-    p.background(220);
+    p.background(colors[0]);
     cube = [
       p.createVector(-0.5, -0.5, -0.5),
       p.createVector(0.5, -0.5, -0.5),
@@ -256,6 +256,7 @@ window.myP5 = new p5((p) => {
     p.translate(canvasWidth / 2, canvasHeight / 2);
     p.scale(scale);
     p.background("#ccc");
+    p.background(colors[0]);
     p.strokeWeight((1 / scale) * 1);
     p.strokeCap(p.ROUND);
     p.strokeJoin(p.ROUND);

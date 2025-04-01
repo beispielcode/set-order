@@ -30,13 +30,14 @@ function syncWorkers() {
   );
 }
 
-function updateWorkers() {
+function updateWorkers(options) {
   [gridWorker].forEach((worker) =>
     worker.postMessage({
       type: "update",
+      ...options,
     })
   );
-  if (workerActive) requestAnimationFrame(updateWorkers);
+  // if (workerActive) requestAnimationFrame(updateWorkers);
 }
 
 initWorkers();

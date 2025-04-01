@@ -73,7 +73,7 @@ function gcd(a, b) {
 }
 
 class Grid {
-  constructor(gridSize = 20, type = "cartesian") {
+  constructor(gridSize = 15, type = "cartesian") {
     this.gridSize = gridSize % 2 ? gridSize : gridSize + 1;
     // this.gridSize = 11;
     this.type = type;
@@ -99,6 +99,7 @@ class Grid {
         grid.push(new Vertex([x - halfWidth, y - halfWidth], index, [], 1));
       }
     }
+    this.center = halfWidth + halfWidth * this.gridSize;
     this.getNeighbors(grid);
     return grid;
   }
@@ -117,6 +118,8 @@ class Grid {
 
         // Create vertex
         grid.push(new Vertex([u, v], index, [], 0));
+        if (!dx && !dy) grid[index].addDebug("center", true);
+        if (!dx && !dy) this.center = index;
         // console.log(index);
         console.log(grid[index].weight);
       }
@@ -143,8 +146,14 @@ class Grid {
       ];
     }
   }
-  update(...args) {
-    const { gridSize, type, speed } = args;
+  update(args) {
+    let { gridSize, type, speed } = args;
+
+    // gridSize = gridSize % 2 ? gridSize : gridSize + 1;
+    // console.log(gridSize);
+    // if (!isNaN(gridSize) && this.gridSize != gridSize) {
+    //   this.changeGridSize(gridSize);
+    // }
 
     if (this.compareGrids(this.destGrid)) {
       console.log("Grids are equal, switching type");
@@ -155,20 +164,75 @@ class Grid {
 
     // console.log("lerping");
 
-    this.lerpGrid(this.destGrid, speed || 0.0125);
+    // this.lerpGrid(this.destGrid, speed || 0.0125);
     // this.lerpGrid(this.destGrid, speed || 0.75);
-    // this.lerpGrid(this.destGrid, speed || 0.075);
+    this.lerpGrid(this.destGrid, speed || 0.075);
+  }
+  changeGridSize(gridSize) {
+    const prevGridSize = this.gridSize;
+    this.gridSize = gridSize;
+    const newGrid = this.getGrid(this.type);
+    // if (prevGridSize < gridSize) {
+    //   const offsetX = gridSize - prevGridSize;
+    //   for (let i = 0; i < prevGridSize; i++) {
+    //     newGrid.splice(
+    //       offsetX + (offsetX + i) * prevGridSize,
+    //       prevGridSize,
+    //       ...this.grid.splice(i * prevGridSize, prevGridSize)
+    //     );
+    //   }
+    // }
+
+    this.grid = newGrid;
   }
   compareGrids(to) {
+    if (this.grid.length != to.length) return false;
     for (let i = 0; i < this.grid.length; i++) {
       if (!this.grid[i].equ(to[i])) return false;
     }
     return true;
   }
   lerpGrid(to, t) {
-    for (let i = 0; i < this.grid.length; i++) {
-      this.grid[i].lerp(to[i], t);
-      // if (!this.grid[i].equ(to[i])) break;
+    if (this.grid.length >= to.length) {
+      for (let i = 0; i < this.grid.length; i++) {
+        // if (i < to.length) this.grid[i].lerp(to[i], t);
+        if (i < to.length) {
+          if (!i || this.grid[i - 1].equ(to[i - 1]))
+            this.grid[i].lerp(to[i], t);
+          // this.grid[i].lerp(to[i], (Math.sin(i) + 1) * 0.25);
+        } else if (this.grid[i].weight > 0.001) {
+          const newVertex = this.grid[i];
+          newVertex.weight = 0;
+          this.grid[i].lerp(newVertex, t);
+          // this.grid[i].lerp(newVertex, (Math.sin(i) + 1) * 0.25);
+        }
+        //remove vertices with weight 0
+        else {
+          this.grid.splice(i, 1);
+          i--;
+        }
+        // if (!this.grid[i].equ(to[i])) break;
+      }
+    } else {
+      for (let i = 0; i < to.length; i++) {
+        // if (i < this.grid.length) this.grid[i].lerp(to[i], t);
+        if (i < this.grid.length) {
+          if (!i || this.grid[i - 1].equ(to[i - 1]))
+            this.grid[i].lerp(to[i], t);
+          // this.grid[i].lerp(to[i], (Math.sin(i) + 1) * 0.25);
+        } else {
+          let newNeighbors = [];
+          to[i].neighbors.forEach((neighbor) => {
+            newNeighbors.push({ index: neighbor.index, weight: 0 });
+          });
+          const newVertex = new Vertex([...to[i].vec.list], i, newNeighbors, 1);
+          // newVertex.weight = 0;
+
+          newVertex.neighbors.forEach((neighbor) => (neighbor.weight = 0));
+
+          this.grid.push(newVertex);
+        }
+      }
     }
     return this;
   }
@@ -269,46 +333,46 @@ class Grid {
             // Calculate neighbors based on quadrant and distance from edge
             if (diagonalType === "main") {
               // Main diagonal (top-left to bottom-right)
-              if (dx > 0) {
-                // Bottom-right quadrant
-                neighbors.push({ index: index - 1, weight: 1 });
-                if (dy !== -maxRadius) {
-                  neighbors.push({ index: index - gridSize, weight: 1 });
-                  neighbors.push({ index: index - gridSize - 1, weight: 1 });
-                }
-                if (dy !== maxRadius && dx !== maxRadius)
-                  neighbors.push({ index: index + gridSize + 1, weight: 1 });
-              } else {
-                // Top-left quadrant
-                neighbors.push({ index: index + 1, weight: 1 });
-                if (dy !== maxRadius) {
-                  neighbors.push({ index: index + gridSize, weight: 1 });
-                  neighbors.push({ index: index + gridSize + 1, weight: 1 });
-                }
-                if (dy !== -maxRadius && dx !== -maxRadius)
-                  neighbors.push({ index: index - gridSize - 1, weight: 1 });
-              }
-            } else {
-              // Anti-diagonal (bottom-left to top-right)
-              if (dy > 0) {
-                // Bottom-left quadrant
-                neighbors.push({ index: index + 1, weight: 1 });
-                if (dx !== maxRadius) {
-                  neighbors.push({ index: index - gridSize, weight: 1 });
-                  neighbors.push({ index: index - gridSize + 1, weight: 1 });
-                }
-                if (dy !== maxRadius && dx !== -maxRadius)
-                  neighbors.push({ index: index + gridSize - 1, weight: 1 });
-              } else {
-                // Top-right quadrant
-                neighbors.push({ index: index - 1, weight: 1 });
-                if (dy !== maxRadius) {
-                  neighbors.push({ index: index + gridSize, weight: 1 });
-                  neighbors.push({ index: index + gridSize - 1, weight: 1 });
-                }
-                if (dx !== maxRadius && dy !== -maxRadius)
-                  neighbors.push({ index: index - gridSize + 1, weight: 1 });
-              }
+              //   if (dx > 0) {
+              //     // Bottom-right quadrant
+              //     neighbors.push({ index: index - 1, weight: 1 });
+              //     if (dy !== -maxRadius) {
+              //       neighbors.push({ index: index - gridSize, weight: 1 });
+              //       neighbors.push({ index: index - gridSize - 1, weight: 1 });
+              //     }
+              //     if (dy !== maxRadius && dx !== maxRadius)
+              //       neighbors.push({ index: index + gridSize + 1, weight: 1 });
+              //   } else {
+              //     // Top-left quadrant
+              //     neighbors.push({ index: index + 1, weight: 1 });
+              //     if (dy !== maxRadius) {
+              //       neighbors.push({ index: index + gridSize, weight: 1 });
+              //       neighbors.push({ index: index + gridSize + 1, weight: 1 });
+              //     }
+              //     if (dy !== -maxRadius && dx !== -maxRadius)
+              //       neighbors.push({ index: index - gridSize - 1, weight: 1 });
+              //   }
+              // } else {
+              //   // Anti-diagonal (bottom-left to top-right)
+              //   if (dy > 0) {
+              //     // Bottom-left quadrant
+              //     neighbors.push({ index: index + 1, weight: 1 });
+              //     if (dx !== maxRadius) {
+              //       neighbors.push({ index: index - gridSize, weight: 1 });
+              //       neighbors.push({ index: index - gridSize + 1, weight: 1 });
+              //     }
+              //     if (dy !== maxRadius && dx !== -maxRadius)
+              //       neighbors.push({ index: index + gridSize - 1, weight: 1 });
+              //   } else {
+              //     // Top-right quadrant
+              //     neighbors.push({ index: index - 1, weight: 1 });
+              //     if (dy !== maxRadius) {
+              //       neighbors.push({ index: index + gridSize, weight: 1 });
+              //       neighbors.push({ index: index + gridSize - 1, weight: 1 });
+              //     }
+              //     if (dx !== maxRadius && dy !== -maxRadius)
+              //       neighbors.push({ index: index - gridSize + 1, weight: 1 });
+              //   }
             }
           }
           // Regular points (not on axes or diagonals)
@@ -337,42 +401,42 @@ class Grid {
             grid[index].addDebug("dy", dy);
             grid[index].addDebug("gdcXY", gdcXY);
 
-            console.log(
-              dx,
-              dy,
-              gdcXY,
-              dx / gdcXY,
-              dy / gdcXY,
-              maxRadius,
-              Math.abs(dx + dx / gdcXY) <= maxRadius,
-              Math.abs(dy + dy / gdcXY) <= maxRadius,
-              index + dx / gdcXY + (dy / gdcXY) * gridSize,
-              Math.abs(dx - dx / gdcXY) <= maxRadius,
-              Math.abs(dy - dy / gdcXY) <= maxRadius,
-              index - dx / gdcXY - (dy / gdcXY) * gridSize
-            );
+            // console.log(
+            //   dx,
+            //   dy,
+            //   gdcXY,
+            //   dx / gdcXY,
+            //   dy / gdcXY,
+            //   maxRadius,
+            //   Math.abs(dx + dx / gdcXY) <= maxRadius,
+            //   Math.abs(dy + dy / gdcXY) <= maxRadius,
+            //   index + dx / gdcXY + (dy / gdcXY) * gridSize,
+            //   Math.abs(dx - dx / gdcXY) <= maxRadius,
+            //   Math.abs(dy - dy / gdcXY) <= maxRadius,
+            //   index - dx / gdcXY - (dy / gdcXY) * gridSize
+            // );
 
-            if (
-              Math.abs(dx + dx / gdcXY) <= maxRadius &&
-              Math.abs(dy + dy / gdcXY) <= maxRadius
-            )
-              neighbors.push({
-                index: index + dx / gdcXY + (dy / gdcXY) * gridSize,
-                weight: 1,
-              });
+            // if (
+            //   Math.abs(dx + dx / gdcXY) <= maxRadius &&
+            //   Math.abs(dy + dy / gdcXY) <= maxRadius
+            // )
+            //   neighbors.push({
+            //     index: index + dx / gdcXY + (dy / gdcXY) * gridSize,
+            //     weight: 1,
+            //   });
 
-            if (Math.abs(dx - dx / gdcXY) > 0 && Math.abs(dy - dy / gdcXY) > 0)
-              neighbors.push({
-                index: index - dx / gdcXY - (dy / gdcXY) * gridSize,
-                weight: 1,
-              });
+            // if (Math.abs(dx - dx / gdcXY) > 0 && Math.abs(dy - dy / gdcXY) > 0)
+            //   neighbors.push({
+            //     index: index - dx / gdcXY - (dy / gdcXY) * gridSize,
+            //     weight: 1,
+            //   });
             if (gdcXY == 1) {
               // grid[centerIndex].addNeighbor({ index: index, weight: 1 });
             }
           }
 
           grid[index].setNeighbors(neighbors);
-          console.log(grid[index].neighbors);
+          // console.log(grid[index].neighbors);
         }
       }
     }
@@ -399,6 +463,7 @@ onmessage = (e) => {
       init();
       break;
     case "update":
+      gridSize = e.data.gridSize ? e.data.gridSize : gridSize;
       grid.update({ gridSize });
       sendGrid();
       break;
@@ -409,6 +474,7 @@ function sendGrid() {
   postMessage({
     type: "grid",
     grid: grid.toArray(),
+    center: grid.center,
     gridType: grid.type,
     gridSize: grid.gridSize,
   });
