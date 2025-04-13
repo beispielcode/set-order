@@ -31,12 +31,13 @@ function syncWorkers() {
 }
 
 function updateWorkers(options) {
-  [gridWorker].forEach((worker) =>
-    worker.postMessage({
-      type: "update",
-      ...options,
-    })
-  );
+  if (workerActive)
+    [gridWorker].forEach((worker) =>
+      worker.postMessage({
+        type: "update",
+        ...options,
+      })
+    );
   // if (workerActive) requestAnimationFrame(updateWorkers);
 }
 

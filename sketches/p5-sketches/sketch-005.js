@@ -18,7 +18,7 @@ window.myP5 = new p5((p) => {
     if (workerActive) updateWorkers();
     p.background(colors[0]);
     p.translate(canvasWidth / 2, canvasHeight / 2);
-    p.strokeWeight(1);
+    p.strokeWeight(2 * GLOBAL_SCALE);
     // const scaleX = canvasWidth / 35;
     const scaleX = canvasWidth / 50;
     const scaleY = scaleX;
@@ -65,6 +65,7 @@ window.myP5 = new p5((p) => {
         // );
       });
     });
+
     p.noStroke();
     structure.vertices.forEach((vertex, index) => {
       p.fill(colors[1]);
@@ -72,9 +73,9 @@ window.myP5 = new p5((p) => {
         vertex.vec.ind(0) * scaleX,
         vertex.vec.ind(1) * scaleY,
         // p.max(5, vertex.weight * 10),
-        10,
+        40 * GLOBAL_SCALE,
         // p.max(5, vertex.weight * 10)
-        10
+        40 * GLOBAL_SCALE
       );
       if (debugActive) {
         let debug = ``;

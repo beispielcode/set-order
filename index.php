@@ -5,17 +5,17 @@ $config = require_once 'config/config.php';
 
 // project/ 
 // ├── lib/ 
-// │ ├── p5.min.js 
-// │ └── paper-full.min.js 
+// │ ├── p5.js 
+// │ └── paper-full.js 
 // ├── sketches/ 
 // │ ├── p5-sketches/ 
 // │ │ ├── sketch-001.js 
 // │ │ ├── sketch-002.js 
 // │ │ └── ... 
 // │ └── paper-sketches/ 
-// │ ├── sketch-001.js 
-// │ ├── sketch-002.js 
-// │ └── ... 
+// │ ├──── sketch-001.js 
+// │ ├──── sketch-002.js 
+// │ └──── ... 
 // ├── utils/ 
 // │ ├── p5-helpers.js 
 // │ └── paper-helpers.js 
@@ -29,91 +29,8 @@ $config = require_once 'config/config.php';
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><?= $config['title'] ?></title>
-  <style>
-    body {
-      margin: 0;
-      padding: 0;
-      font-family: sans-serif;
-    }
-
-    #controls {
-      position: fixed;
-      padding: 1rem;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      border-radius: 0 0 .5rem .5rem;
-      z-index: 2;
-      /*background: #CCC4;*/
-      /* backdrop-filter: blur(.125rem);  */
-    }
-
-    select,
-    button {
-      font-size: 1rem;
-      padding: .5rem;
-      margin-right: 1rem;
-    }
-
-    #version-info {
-      font-size: 1rem;
-      /* color: #666; */
-      margin-top: 5px;
-    }
-
-    canvas {
-      position: fixed;
-      top: 0;
-      left: 0;
-    }
-  </style>
-  <script src="sketch-loader.js"></script>
-  <script src="utils/helpers.js"></script>
-  <script src="utils/perlin.js"></script>
-  <script src="utils/Bezier-easing.js"></script>
-  <script src="lib/vec.js"></script>
-  <script src="lib/matrix.js"></script>
-  <script src="lib/vertex.js"></script>
-  <script src="workers/worker-coordinator.js" defer></script>
-  <!-- <script src="https://cdn.jsdelivr.net/npm/p5"></script> -->
-  <!-- <script src="https://cdn.jsdelivr.net/npm/p5.capture"></script> -->
-
-  <!-- <script type="module" src="utils/at-protocol.js"></script> -->
-
-</head>
-
-<body>
-  <div id="controls">
-    <select id="library-select" default="<?= $config['last_loaded_sketch'][0] ?>">
-      <option value="p5" <?php echo $config['last_loaded_sketch'][0] == 'p5' ? 'selected="true"' : ''; ?>>p5.js
-      </option>
-      <option value="paper" <?php echo $config['last_loaded_sketch'][0] == 'paper' ? 'selected="true"' : ''; ?>>
-        Paper.js
-      </option>
-    </select>
-    <select id="sketch-select" default="<?= $config['last_loaded_sketch'][1] ?>"></select>
-    <button id="load-btn">Load Sketch</button>
-    <span id="version-info"></span>
-    <label for="color-a">color a
-      <input type="color" name="color-a" id="color-a" value="<?= $config['colors'][0] ?>">
-    </label>
-    <label for="color-b">color b
-      <input type="color" name="color-b" id="color-b" value="<?= $config['colors'][1] ?>">
-    </label>
-    <label for="color-c">color c
-      <input type="color" name="color-c" id="color-c" value="<?= $config['colors'][2] ?>">
-    </label>
-    <button id="save-colors">Save colors</button>
-    <label for="workers-active">
-      Active workers
-      <input checked type="checkbox" name="workers-active" id="workers-active">
-    </label>
-    <label for="debug-active">
-      Active debug
-      <input type="checkbox" name="debug-active" id="debug-active" <?= isset($config['debug']) && $config['debug'] ? 'checked' : '' ?>>
-    </label>
-    <input type="checkbox" name="recorder-toggle" id="recorder-toggle" <?= isset($config['recorder']) && $config['recorder'] ? 'checked' : '' ?>>
-  </div>
+  <link rel="stylesheet" href="assets/fonts/stylesheet.css">
+  <link rel="stylesheet" href="assets/css/style.css">
 
   <script>
     <?php
@@ -130,90 +47,116 @@ $config = require_once 'config/config.php';
       p5: ['<?= implode("', '", $p5sketches) ?>'],
       paper: ['<?= implode("', '", $paperSketches) ?>']
     };
-
-    const librarySelect = document.getElementById('library-select');
-    const sketchSelect = document.getElementById('sketch-select');
-    const loadBtn = document.getElementById('load-btn');
-    const versionInfo = document.getElementById('version-info');
-    const recorderToggle = document.getElementById('recorder-toggle');
-    const colorInputs = document.querySelectorAll('input[type="color"]');
-    const saveColorsButton = document.getElementById('save-colors');
-    let colors = Array.from(colorInputs).map(input => input.value);
-    colorInputs.forEach((input, index) => input.oninput = () => colors[index] = input.value)
-    saveColorsButton.addEventListener('click', () => updateConfig('colors', colors))
-    const workersActiveInput = document.getElementById('workers-active');
-    let workerActive = workersActiveInput.checked;
-    workersActiveInput.addEventListener('change', () => {
-      workerActive = workersActiveInput.checked;
-      if (workerActive) updateWorkers();
-    });
-    const debugActiveInput = document.getElementById('debug-active');
-    let debugActive = <?= isset($config['debug']) && $config['debug'] ? 'true' : 'false' ?>;
-    debugActiveInput.addEventListener('change', () => {
-      debugActive = debugActiveInput.checked;
-      updateConfig('debug', debugActive ? 'true' : 'false');
-    })
-    let recorder = <?= isset($config['recorder']) && $config['recorder'] ? 'true' : 'false' ?>;
-
-    // Update sketch options when library changes
-    function updateSketchOptions() {
-      const library = librarySelect.value;
-      sketchSelect.innerHTML = '';
-
-      sketches[library].forEach(sketch => {
-        const option = document.createElement('option');
-        option.value = sketch;
-        option.textContent = sketch;
-        if (sketch == '<?= $config['last_loaded_sketch'][1] ?>')
-          option.selected = true;
-        sketchSelect.appendChild(option);
-      });
-    }
-
-    // Initial population
-    updateSketchOptions();
-
-    // Event listeners
-    librarySelect.addEventListener('change', updateSketchOptions);
-
-    loadBtn.addEventListener('click', () => {
-      const library = librarySelect.value;
-      const sketch = sketchSelect.value;
-
-      if (library === 'p5') {
-        sketchLoader.loadP5Sketch(sketch);
-      } else {
-        sketchLoader.loadPaperSketch(sketch);
-      }
-
-      versionInfo.textContent = `Current: ${sketch}`;
-    });
-
-    recorderToggle.addEventListener('change', () => {
-      if (recorderToggle.checked) {
-        recorder = true;
-      } else {
-        try {
-          sketchLoader.removeScript(`https://cdn.jsdelivr.net/npm/p5.capture`);
-        } catch (error) {
-          console.warn('No recorder script found')
-        }
-        recorder = false;
-      }
-      updateConfig('recorder', recorder ? 'true' : 'false');
-    })
-
-    // post new config to config/config.php
-    async function updateConfig(...args) {
-      const url = 'index.php';
-      console.log(JSON.stringify(args));
-
-      const request = await fetch(url, {
-        method: 'POST',
-        body: JSON.stringify(args)
-      })
-    }
+    const lastLoadedSketch = '<?= $config['last_loaded_sketch'][1] ?>';
+    let colorIndex = <?= $config['color_index'] ?>;
+    let workerActive = <?= $config['worker_active'] ? 'true' : 'false' ?>;
   </script>
+  <script src="sketch-loader.js"></script>
+  <script src="utils/helpers.js"></script>
+  <script src="utils/perlin.js"></script>
+  <script src="utils/Bezier-easing.js"></script>
+  <script src="lib/webmidi.iife.js"></script>
+  <script type="module">
+    import { breezeid } from './lib/breezeid.js';
+    window.breezeid = breezeid;
+  </script>
+  <script src="lib/vec.js"></script>
+  <script src="lib/matrix.js"></script>
+  <script src="lib/vertex.js"></script>
+  <script src="lib/a-path-finder.js"></script>
+  <script src="workers/worker-coordinator.js" defer></script>
+  <script src="utils/interface.js" defer></script>
+  <script src="lib/paper-full.js"></script>
+  <script src="utils/paper-helpers.js"></script>
+  <!-- <script src="utils/navigation.js" defer></script> -->
+  <!-- <script src="https://cdn.jsdelivr.net/npm/p5"></script> -->
+  <!-- <script src="https://cdn.jsdelivr.net/npm/p5.capture"></script> -->
+
+  <!-- <script type="module" src="utils/at-protocol.js"></script> -->
+
+</head>
+
+<body>
+  <div id="controls">
+    <fieldset id="sketch-loader">
+      <legend>sketch loader</legend>
+      <select id="library-select" default="<?= $config['last_loaded_sketch'][0] ?>">
+        <option value="p5" <?php echo $config['last_loaded_sketch'][0] == 'p5' ? 'selected="true"' : ''; ?>>p5.js
+        </option>
+        <option value="paper" <?php echo $config['last_loaded_sketch'][0] == 'paper' ? 'selected="true"' : ''; ?>>
+          Paper.js
+        </option>
+      </select>
+      <select id="sketch-select" default="<?= $config['last_loaded_sketch'][1] ?>"></select>
+      <button id="load-btn" class="full-width">Load Sketch</button>
+      <span id="version-info" class="full-width"></span>
+    </fieldset>
+    <fieldset id="color-wrapper">
+      <legend>Colours</legend>
+      <?php
+      foreach ($config['colors'] as $key => $color) {
+        ?>
+        <div class="color-scheme full-width">
+          <div class="color">
+            <input type="color" name="color-<?= $key ?>a" id="color-<?= $key ?>a" value="<?= $color[0] ?>">
+            <input type="text" name="hex-<?= $key ?>a" id="hex-<?= $key ?>a" value="<?= $color[0] ?>">
+          </div>
+          <div class="color">
+            <input type="color" name="color-<?= $key ?>b" id="color-<?= $key ?>b" value="<?= $color[1] ?>">
+            <input type="text" name="hex-<?= $key ?>b" id="hex-<?= $key ?>b" value="<?= $color[1] ?>">
+          </div>
+          <div class="color">
+            <input type="color" name="color-<?= $key ?>c" id="color-<?= $key ?>c" value="<?= $color[2] ?>">
+            <input type="text" name="hex-<?= $key ?>c" id="hex-<?= $key ?>c" value="<?= $color[2] ?>">
+          </div>
+          <input type="radio" name="color-active" <?= intval($key) == $config['color_index'] ? 'checked' : '' ?>
+            id="color-active-<?= $key ?>">
+          <button id="delete-scheme-<?= $key ?>" class="delete-button">delete</button>
+        </div>
+        <?php
+      }
+      ?>
+      <button id="add-color" class="full-width">add colour</button>
+    </fieldset>
+    <fieldset>
+      <legend>MIDI emulator</legend>
+      <label class="full-width" for="chan0">chan0
+        <input type="range" style="width:100%" name="chan0" value="<?= $config['chan0'] ?>" id="chan0" min="0" max="127"
+          step="1">
+      </label>
+      <label class="full-width" for="chan1">chan1
+        <input type="range" style="width:100%" name="chan1" value="<?= $config['chan1'] ?>" id="chan1" min="0" max="127"
+          step="1">
+      </label>
+      <label class="full-width" for="chan2">chan2
+        <input type="range" style="width:100%" name="chan2" value="<?= $config['chan2'] ?>" id="chan2" min="0" max="127"
+          step="1">
+      </label>
+    </fieldset>
+    <fieldset>
+      <legend>controls</legend>
+      <label class="full-width" for="workers-active">
+        Active workers
+        <input type="checkbox" name="workers-active" id="workers-active" <?= isset($config['worker_active']) && $config['worker_active'] ? 'checked' : '' ?>>
+      </label>
+      <label class="full-width" for="debug-active">
+        Active debug
+        <input type="checkbox" name="debug-active" id="debug-active" <?= isset($config['debug']) && $config['debug'] ? 'checked' : '' ?>>
+      </label>
+      <label class="full-width" for="recording-active">
+        Recording delay
+        <input type="checkbox" name="recording-active" id="recording-active" <?= isset($config['recording']) && $config['recording'] ? 'checked' : '' ?>>
+      </label>
+    </fieldset>
+  </div>
+  <main>
+    <div id="output-wrapper">
+      <output id="output-chan0">chan0: <?= str_pad($config['chan0'], 3, "0", STR_PAD_LEFT) ?>/127</output>
+      <output id="output-chan1">chan1: <?= str_pad($config['chan1'], 3, "0", STR_PAD_LEFT) ?>/127</output>
+      <output id="output-chan2">chan2: <?= str_pad($config['chan2'], 3, "0", STR_PAD_LEFT) ?>/127</output>
+    </div>
+  </main>
+  <canvas id="navigation" width="356" height="356"></canvas>
   <?php
 
   // listens for POST request
@@ -222,18 +165,24 @@ $config = require_once 'config/config.php';
     $data = json_decode(file_get_contents('php://input'), true);
 
     // update config.php
-    if (count($data) == 2) {
-      $config[$data[0]] = $data[1];
-    } elseif (count($data) == 3) {
-      $config[$data[0]][$data[1]] = $data[2];
-    }
+    if (is_array($data))
+      foreach ($data as $key => $value)
+        $config[$key] = $value;
 
     function formatValue($value)
     {
-      if ($value === 'true' || $value === true) {
+      if (is_array($value)) {
+        return '[' .
+          implode(', ', array_map(function ($v) {
+            return formatValue($v);
+          }, $value)) .
+          ']';
+      } elseif ($value === 'true' || $value === true) {
         return 'true';
       } elseif ($value === 'false' || $value === false) {
         return 'false';
+      } elseif (is_int($value)) {
+        return $value;
       } else {
         return "'$value'";
       }
@@ -243,14 +192,15 @@ $config = require_once 'config/config.php';
     $config_str = "[\n";
     foreach ($config as $key => $value) {
       $formatted_value = '';
-      if (is_array($value)) {
-        $formatted_array = array_map(function ($v) {
-          return formatValue($v);
-        }, $value);
-        $formatted_value = '[' . implode(', ', $formatted_array) . ']';
-      } else {
-        $formatted_value = formatValue($value);
-      }
+      // if (is_array($value)) {
+      //   $formatted_array = array_map(function ($v) {
+      //     return formatValue($v);
+      //   }, $value);
+      //   $formatted_value = '[' . implode(', ', $formatted_array) . ']';
+      // } else {
+      //   $formatted_value = formatValue($value);
+      // }
+      $formatted_value = formatValue($value);
       $config_str .= "  '$key' => $formatted_value,\n";
     }
     $config_str .= ']';
@@ -261,5 +211,48 @@ $config = require_once 'config/config.php';
 
   ?>
 </body>
+<script type="module">
+
+  // Enable WEBMIDI.js and trigger the onEnabled() function when ready
+  WebMidi
+    .enable()
+    .then(onEnabled)
+    .catch(err => alert(err));
+
+  // Function triggered when WEBMIDI.js is ready
+  function onEnabled() {
+
+    if (WebMidi.inputs.length < 1) {
+      console.log("No device detected.");
+    } else {
+      WebMidi.inputs.forEach((device, index) => {
+        console.log(`${index}: ${device.name}`);
+      });
+    }
+
+    const device = WebMidi.inputs[0];
+    console.log(device);
+
+    // const device = WebMidi.getInputByName("TYPE NAME HERE!")
+    // device.channels.forEach((channel, index) => {
+    //   channel.addListener("noteon", e => {
+    //     console.log(e);
+
+    //     console.log(`${e.note.name}`);
+    //   });
+    // })
+    if (device)
+      device.addListener("controlchange", e => {
+        const { message } = e;
+        const [statusByte, controller, value] = message.data;
+        if (controller == 2) changeChanValue(null, 0, value);
+        else if (controller == 3) changeChanValue(null, 1, value);
+        else if (controller == 4) changeChanValue(null, 2, value);
+        // console.log(`Received 'controlchange' message.`, e.message);
+      }, { channels: [1] });
+
+  }
+
+</script>
 
 </html>

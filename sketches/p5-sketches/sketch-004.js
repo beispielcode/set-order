@@ -19,7 +19,7 @@ window.myP5 = new p5((p) => {
     // console.log(structure.vertices);
     p.translate(canvasWidth / 2, canvasHeight / 2);
     // p.rotate(p.frameCount / 1000);
-    p.strokeWeight(1);
+    p.strokeWeight(1 * GLOBAL_SCALE);
     // const scaleX = p.map(p.mouseX, 0, canvasWidth, 0, canvasWidth / 4);
     const scaleX = canvasWidth / 40;
     const scaleY = scaleX;
@@ -78,6 +78,7 @@ window.myP5 = new p5((p) => {
         if (debugActive) {
           let debug = ``;
           p.fill(colors[2]);
+          p.fill("#FF1493");
           for (const entry of vertex.debug.entries())
             debug += `${entry[0]}: ${entry[1]}\n`;
           p.text(debug, vertex.vec.ind(0) * scaleX, vertex.vec.ind(1) * scaleY);

@@ -10,9 +10,12 @@ window.myP5 = new p5((p) => {
     values = [1, 0];
   };
 
+  let noisePos = 0;
+
   p.draw = function () {
     // p.background(220);
-    let targetValueLength = p.floor(p.map(p.mouseX, 0, canvasWidth, 0, 5));
+    const speed = p.map(easedChannels[1], 0, 127, 0, 0.125);
+    let targetValueLength = p.floor(p.map(easedChannels[0], 0, 127, 0, 5));
     targetValueLength = p.map(targetValueLength, 0, 3, 10, 2000);
     while (values.length < targetValueLength) {
       values.push(p.random(0, 1));
@@ -21,11 +24,9 @@ window.myP5 = new p5((p) => {
       values.pop();
     }
     let perlin;
+    noisePos += speed;
     values.forEach((value, index) => {
-      perlin = noise.simplex2(
-        p.frameCount / 50 + index / 20,
-        p.frameCount / 50 + index / 20
-      );
+      perlin = noise.simplex2(index / 20 + noisePos, index / 20 + noisePos);
       if (perlin < 0) {
         values[index] = p.lerp(value, 0, 0.6);
       } else {
@@ -34,7 +35,7 @@ window.myP5 = new p5((p) => {
     });
     // console.log(values);
 
-    p.strokeWeight(1);
+    p.strokeWeight(1 * GLOBAL_SCALE);
     for (let x = 0; x < canvasWidth; x++) {
       let valueIndex = p.floor(p.map(x, 0, canvasWidth, 0, values.length - 1));
       // console.log(valueIndex);
@@ -47,7 +48,7 @@ window.myP5 = new p5((p) => {
       // p.stroke(p.pow(value, 10) * 255, p.pow(value, 10) * 255, value * 255);
       if (
         noise.simplex2(valueIndex, valueIndex) >
-        p.map(p.mouseY, 0, canvasHeight, 0, 1)
+        p.map(easedChannels[2], 0, 127, 1, 0)
       ) {
         b = value ? 255 : p.sqrt(value) * 255;
         g = value ? 255 : p.sqrt(value) * 255;

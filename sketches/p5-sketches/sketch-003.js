@@ -1,5 +1,5 @@
 window.myP5 = new p5((p) => {
-  let cube, axis, angle, gridWidth, gridHeight, rotationSpeed;
+  let cube, axes, angle, gridWidth, gridHeight, rotationSpeed;
   let scale = 200;
   let prevFrame = [];
   window.addEventListener("resize", () => {
@@ -67,6 +67,13 @@ window.myP5 = new p5((p) => {
   ) {
     // connect the vertices
     p.noFill();
+    // copies the vertices array
+    const newVertices = vertices.slice();
+    newVertices.forEach((vertex, index) => {
+      axes.forEach((axis) => {
+        newVertices[index] = rotateAround(p5, newVertices[index], axis, angle);
+      });
+    });
 
     if (showVertices) {
       // p.noStroke();
@@ -85,73 +92,73 @@ window.myP5 = new p5((p) => {
     p.stroke(colors[0]);
     p.beginShape();
     p.vertex(
-      origin.x + vertices[0].x * cubeSize,
-      origin.y + vertices[0].y * cubeSize
+      origin.x + newVertices[0].x * cubeSize,
+      origin.y + newVertices[0].y * cubeSize
     );
     p.vertex(
-      origin.x + vertices[1].x * cubeSize,
-      origin.y + vertices[1].y * cubeSize
+      origin.x + newVertices[1].x * cubeSize,
+      origin.y + newVertices[1].y * cubeSize
     );
     p.vertex(
-      origin.x + vertices[5].x * cubeSize,
-      origin.y + vertices[5].y * cubeSize
+      origin.x + newVertices[5].x * cubeSize,
+      origin.y + newVertices[5].y * cubeSize
     );
     p.vertex(
-      origin.x + vertices[1].x * cubeSize,
-      origin.y + vertices[1].y * cubeSize
+      origin.x + newVertices[1].x * cubeSize,
+      origin.y + newVertices[1].y * cubeSize
     );
     p.vertex(
-      origin.x + vertices[3].x * cubeSize,
-      origin.y + vertices[3].y * cubeSize
+      origin.x + newVertices[3].x * cubeSize,
+      origin.y + newVertices[3].y * cubeSize
     );
     p.vertex(
-      origin.x + vertices[7].x * cubeSize,
-      origin.y + vertices[7].y * cubeSize
+      origin.x + newVertices[7].x * cubeSize,
+      origin.y + newVertices[7].y * cubeSize
     );
     p.vertex(
-      origin.x + vertices[3].x * cubeSize,
-      origin.y + vertices[3].y * cubeSize
+      origin.x + newVertices[3].x * cubeSize,
+      origin.y + newVertices[3].y * cubeSize
     );
     p.vertex(
-      origin.x + vertices[2].x * cubeSize,
-      origin.y + vertices[2].y * cubeSize
+      origin.x + newVertices[2].x * cubeSize,
+      origin.y + newVertices[2].y * cubeSize
     );
     p.vertex(
-      origin.x + vertices[6].x * cubeSize,
-      origin.y + vertices[6].y * cubeSize
+      origin.x + newVertices[6].x * cubeSize,
+      origin.y + newVertices[6].y * cubeSize
     );
     p.vertex(
-      origin.x + vertices[2].x * cubeSize,
-      origin.y + vertices[2].y * cubeSize
+      origin.x + newVertices[2].x * cubeSize,
+      origin.y + newVertices[2].y * cubeSize
     );
     p.vertex(
-      origin.x + vertices[0].x * cubeSize,
-      origin.y + vertices[0].y * cubeSize
+      origin.x + newVertices[0].x * cubeSize,
+      origin.y + newVertices[0].y * cubeSize
     );
     p.vertex(
-      origin.x + vertices[4].x * cubeSize,
-      origin.y + vertices[4].y * cubeSize
+      origin.x + newVertices[4].x * cubeSize,
+      origin.y + newVertices[4].y * cubeSize
     );
     p.vertex(
-      origin.x + vertices[5].x * cubeSize,
-      origin.y + vertices[5].y * cubeSize
+      origin.x + newVertices[5].x * cubeSize,
+      origin.y + newVertices[5].y * cubeSize
     );
     p.vertex(
-      origin.x + vertices[7].x * cubeSize,
-      origin.y + vertices[7].y * cubeSize
+      origin.x + newVertices[7].x * cubeSize,
+      origin.y + newVertices[7].y * cubeSize
     );
     p.vertex(
-      origin.x + vertices[6].x * cubeSize,
-      origin.y + vertices[6].y * cubeSize
+      origin.x + newVertices[6].x * cubeSize,
+      origin.y + newVertices[6].y * cubeSize
     );
     p.vertex(
-      origin.x + vertices[4].x * cubeSize,
-      origin.y + vertices[4].y * cubeSize
+      origin.x + newVertices[4].x * cubeSize,
+      origin.y + newVertices[4].y * cubeSize
     );
     p.endShape();
 
     if (quatified) {
-      vertices.forEach((vertex) => {
+      newVertices.forEach((vertex) => {
         if (showVertices) {
           p.noStroke();
           p.fill(colors[1]);
@@ -174,82 +181,82 @@ window.myP5 = new p5((p) => {
       p.stroke(colors[1]);
       p.beginShape();
       p.vertex(
-        p.round(origin.x + vertices[0].x * cubeSize),
-        p.round(origin.y + vertices[0].y * cubeSize)
+        p.round(origin.x + newVertices[0].x * cubeSize),
+        p.round(origin.y + newVertices[0].y * cubeSize)
       );
       p.vertex(
-        p.round(origin.x + vertices[1].x * cubeSize),
-        p.round(origin.y + vertices[1].y * cubeSize)
+        p.round(origin.x + newVertices[1].x * cubeSize),
+        p.round(origin.y + newVertices[1].y * cubeSize)
       );
       p.vertex(
-        p.round(origin.x + vertices[5].x * cubeSize),
-        p.round(origin.y + vertices[5].y * cubeSize)
+        p.round(origin.x + newVertices[5].x * cubeSize),
+        p.round(origin.y + newVertices[5].y * cubeSize)
       );
       p.vertex(
-        p.round(origin.x + vertices[1].x * cubeSize),
-        p.round(origin.y + vertices[1].y * cubeSize)
+        p.round(origin.x + newVertices[1].x * cubeSize),
+        p.round(origin.y + newVertices[1].y * cubeSize)
       );
       p.vertex(
-        p.round(origin.x + vertices[3].x * cubeSize),
-        p.round(origin.y + vertices[3].y * cubeSize)
+        p.round(origin.x + newVertices[3].x * cubeSize),
+        p.round(origin.y + newVertices[3].y * cubeSize)
       );
       p.vertex(
-        p.round(origin.x + vertices[7].x * cubeSize),
-        p.round(origin.y + vertices[7].y * cubeSize)
+        p.round(origin.x + newVertices[7].x * cubeSize),
+        p.round(origin.y + newVertices[7].y * cubeSize)
       );
       p.vertex(
-        p.round(origin.x + vertices[3].x * cubeSize),
-        p.round(origin.y + vertices[3].y * cubeSize)
+        p.round(origin.x + newVertices[3].x * cubeSize),
+        p.round(origin.y + newVertices[3].y * cubeSize)
       );
       p.vertex(
-        p.round(origin.x + vertices[2].x * cubeSize),
-        p.round(origin.y + vertices[2].y * cubeSize)
+        p.round(origin.x + newVertices[2].x * cubeSize),
+        p.round(origin.y + newVertices[2].y * cubeSize)
       );
       p.vertex(
-        p.round(origin.x + vertices[6].x * cubeSize),
-        p.round(origin.y + vertices[6].y * cubeSize)
+        p.round(origin.x + newVertices[6].x * cubeSize),
+        p.round(origin.y + newVertices[6].y * cubeSize)
       );
       p.vertex(
-        p.round(origin.x + vertices[2].x * cubeSize),
-        p.round(origin.y + vertices[2].y * cubeSize)
+        p.round(origin.x + newVertices[2].x * cubeSize),
+        p.round(origin.y + newVertices[2].y * cubeSize)
       );
       p.vertex(
-        p.round(origin.x + vertices[0].x * cubeSize),
-        p.round(origin.y + vertices[0].y * cubeSize)
+        p.round(origin.x + newVertices[0].x * cubeSize),
+        p.round(origin.y + newVertices[0].y * cubeSize)
       );
       p.vertex(
-        p.round(origin.x + vertices[4].x * cubeSize),
-        p.round(origin.y + vertices[4].y * cubeSize)
+        p.round(origin.x + newVertices[4].x * cubeSize),
+        p.round(origin.y + newVertices[4].y * cubeSize)
       );
       p.vertex(
-        p.round(origin.x + vertices[5].x * cubeSize),
-        p.round(origin.y + vertices[5].y * cubeSize)
+        p.round(origin.x + newVertices[5].x * cubeSize),
+        p.round(origin.y + newVertices[5].y * cubeSize)
       );
       p.vertex(
-        p.round(origin.x + vertices[7].x * cubeSize),
-        p.round(origin.y + vertices[7].y * cubeSize)
+        p.round(origin.x + newVertices[7].x * cubeSize),
+        p.round(origin.y + newVertices[7].y * cubeSize)
       );
       p.vertex(
-        p.round(origin.x + vertices[6].x * cubeSize),
-        p.round(origin.y + vertices[6].y * cubeSize)
+        p.round(origin.x + newVertices[6].x * cubeSize),
+        p.round(origin.y + newVertices[6].y * cubeSize)
       );
       p.vertex(
-        p.round(origin.x + vertices[4].x * cubeSize),
-        p.round(origin.y + vertices[4].y * cubeSize)
+        p.round(origin.x + newVertices[4].x * cubeSize),
+        p.round(origin.y + newVertices[4].y * cubeSize)
       );
       p.endShape();
     }
   };
 
   p.draw = function () {
-    scale = p.map(p.mouseY, 0, canvasHeight, 200, 10);
+    scale = p.map(easedChannels[0], 0, 127, 200, 20);
     gridWidth = canvasWidth / scale;
     gridHeight = canvasHeight / scale;
     let gridDotSize = (p.sqrt(scale) / scale) * 1;
     let cubeSize = p.map(
-      p.mouseX,
+      easedChannels[2],
       0,
-      canvasWidth,
+      127,
       (canvasWidth / scale) * 0.0625,
       (canvasWidth / scale) * 0.75
     );
@@ -257,7 +264,7 @@ window.myP5 = new p5((p) => {
     p.scale(scale);
     p.background("#ccc");
     p.background(colors[0]);
-    p.strokeWeight((1 / scale) * 1);
+    p.strokeWeight((2 / scale) * 2 * GLOBAL_SCALE);
     p.strokeCap(p.ROUND);
     p.strokeJoin(p.ROUND);
     // p.strokeCap(p.BEVEL);
@@ -299,6 +306,7 @@ window.myP5 = new p5((p) => {
     p.noStroke();
     p.fill(colors[1]);
     p.stroke(colors[1]);
+    p.stroke(colors[2]);
     for (let x = 0; x <= gridWidth + 1; x++) {
       p.line(
         x - p.round(gridWidth / 2),
@@ -320,13 +328,22 @@ window.myP5 = new p5((p) => {
         // );
       }
     }
-    cube.forEach((vertex, index) => {
-      axes.forEach((axis) => {
-        cube[index] = rotateAround(p5, cube[index], axis, angle);
-      });
-    });
-    // p.strokeWeight((1 / scale) * 32);
+    // const axisOffset = p.map(easedChannels[1], 0, 127, 0, 1);
+    // rotationSpeed = 0.125 + axisOffset * 0.75;
+    // angle = p.radians(rotationSpeed / axes.length);
+    // axes = [
+    //   p.createVector(axisOffset * 1, axisOffset * 2, 1 + axisOffset * 3),
+    //   p.createVector(axisOffset * 1, 1 + axisOffset * 2, axisOffset * 3),
+    //   p.createVector(1 + axisOffset * 1, axisOffset * 2, axisOffset * 3),
+    // ];
+    // cube.forEach((vertex, index) => {
+    //   axes.forEach((axis) => {
+    //     cube[index] = rotateAround(p5, cube[index], axis, angle);
+    //   });
+    // });
+    // p.strokeWeight((1 / scale) * 32*GLOBAL_SCALE);
 
+    angle = p.radians(map(easedChannels[1], 0, 127, 0, 360));
     p.drawCube(
       cube,
       p.createVector(0, 0),
@@ -334,7 +351,7 @@ window.myP5 = new p5((p) => {
       // [colors[1], "#ffd400"],
       // [colors[1], "#e50000"],
       // [colors[1], "#00ef00"],
-      [colors[1], colors[2]],
+      [colors[2], colors[1]],
       false,
       true
     );

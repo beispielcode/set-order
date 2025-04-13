@@ -457,6 +457,7 @@ onmessage = (e) => {
     case "init":
       gridSize = e.data.gridSize ? e.data.gridSize : gridSize;
       grid = new Grid(gridSize);
+      sendGrid();
       break;
     case "sync":
       grid.update({ gridSize });

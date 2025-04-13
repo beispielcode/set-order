@@ -2,12 +2,11 @@
 const sketchLoader = {
   currentSketch: null,
   currentLib: null,
-  // libraryChangeTimeout: null,
 
   addScript: function (src) {
     const script = document.createElement("script");
     script.src = src;
-    document.body.appendChild(script);
+    document.body.querySelector("main").appendChild(script);
     if (!this.currentSketch) {
       this.currentSketch = { scripts: [] };
     }
@@ -26,29 +25,23 @@ const sketchLoader = {
 
   // Load a p5.js sketch
   loadP5Sketch: function (sketchName) {
-    updateConfig("last_loaded_sketch", ["p5", sketchName]);
-    // clearTimeout(this.libraryChangeTimeout);
+    updateConfig({ last_loaded_sketch: ["p5", sketchName] });
     this.unloadCurrent();
     this.currentLib = "p5";
-    // if (this.currentLib !== 'p5') {
-    //     libraryChangeTimeout = setTimeout(() => {
-    //         this.loadP5Sketch(sketchName);
-    //     }, 100);
-    //     return;
-    // }
 
     // Create script elements
     const libScript = this.addScript("lib/p5.js");
     libScript.onload = () => {
       this.addScript(`sketches/p5-sketches/${sketchName}.js`);
       this.addScript(`utils/p5-helpers.js`);
-      if (recorder) this.addScript("https://cdn.jsdelivr.net/npm/p5.capture");
+      // if (recorder) this.addScript("https://cdn.jsdelivr.net/npm/p5.capture");
     };
 
     // Create canvas container
     const container = document.createElement("div");
     container.id = "p5-container";
-    document.body.appendChild(container);
+    container.classList.add("canvas-wrapper");
+    document.body.querySelector("main").appendChild(container);
 
     this.currentSketch = {
       scripts: this.currentSketch.scripts,
@@ -58,36 +51,33 @@ const sketchLoader = {
 
   // Load a Paper.js sketch
   loadPaperSketch: function (sketchName) {
-    updateConfig("last_loaded_sketch", ["paper", sketchName]);
-    // clearTimeout(this.libraryChangeTimeout);
+    updateConfig({ last_loaded_sketch: ["paper", sketchName] });
     this.unloadCurrent();
     this.currentLib = "paper";
-    // if (this.currentLib !== 'paper') {
-    //     libraryChangeTimeout = setTimeout(() => {
-    //         this.loadPaperSketch(sketchName);
-    //     }, 100);
-    //     return;
-    // }
 
     // Create canvas
+    const container = document.createElement("div");
+    container.id = "paper-container";
+    container.classList.add("canvas-wrapper");
+    document.body.querySelector("main").appendChild(container);
     const canvas = document.createElement("canvas");
     canvas.id = "paper-canvas";
     canvas.width = canvasWidth;
     canvas.height = canvasHeight;
-    document.body.appendChild(canvas);
+    canvas.setAttribute("keepalive", "true");
+    canvas.setAttribute("data-keepalive", "true");
+    container.appendChild(canvas);
 
     // Create script elements
-    const libScript = this.addScript("lib/paper-full.js");
-    libScript.onload = () => {
-      // this.currentSketch.scope  = new paper.PaperScope;
-      // this.currentSketch.scope.setup('paper-canvas');
-      this.addScript(`sketches/paper-sketches/${sketchName}.js`);
-      this.addScript(`utils/paper-helpers.js`);
-    };
+    // const libScript = this.addScript("lib/paper-full.js");
+    // libScript.onload = () => {
+    this.addScript(`sketches/paper-sketches/${sketchName}.js`);
+    // this.addScript(`utils/paper-helpers.js`);
+    // };
 
     this.currentSketch = {
       scripts: this.currentSketch.scripts,
-      canvas: canvas,
+      canvas: container,
     };
   },
 
