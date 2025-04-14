@@ -230,11 +230,13 @@ const channelInputs = [
   document.getElementById("chan0"),
   document.getElementById("chan1"),
   document.getElementById("chan2"),
+  document.getElementById("chan3"),
 ];
 const channels = [
   parseInt(channelInputs[0].value),
   parseInt(channelInputs[1].value),
   parseInt(channelInputs[2].value),
+  parseInt(channelInputs[3].value),
 ];
 
 const easedChannelDynamicsF = 2.25;
@@ -242,30 +244,17 @@ const easedChannelDynamicsZeta = 1;
 const easedChannelDynamicsR = 0;
 
 const easedChannelDynamics = [
-  new SecondOrderDynamics(
-    easedChannelDynamicsF,
-    easedChannelDynamicsZeta,
-    easedChannelDynamicsR,
-    0
-  ),
-  new SecondOrderDynamics(
-    easedChannelDynamicsF,
-    easedChannelDynamicsZeta,
-    easedChannelDynamicsR,
-    0
-  ),
-  new SecondOrderDynamics(
-    easedChannelDynamicsF,
-    easedChannelDynamicsZeta,
-    easedChannelDynamicsR,
-    0
-  ),
+  new SecondOrderDynamics(0),
+  new SecondOrderDynamics(0),
+  new SecondOrderDynamics(0),
+  new SecondOrderDynamics(0),
 ];
-const easedChannels = [1, 1, 1];
+const easedChannels = [1, 1, 1, 1];
 const channelOutputs = [
   document.getElementById("output-chan0"),
   document.getElementById("output-chan1"),
   document.getElementById("output-chan2"),
+  document.getElementById("output-chan3"),
 ];
 
 channelInputs.forEach((input, index) => {
@@ -307,7 +296,7 @@ function changeChanValue(e, chan, value) {
     if (delta > 0) channelInputs[chan].value++;
     else if (delta < 0) channelInputs[chan].value--;
   } else if (value || value === 0) {
-    console.log(value);
+    // console.log(value);
     channelInputs[chan].value = value;
   }
 

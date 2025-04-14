@@ -56,6 +56,12 @@ $config = require_once 'config/config.php';
   <script src="utils/perlin.js"></script>
   <script src="utils/Bezier-easing.js"></script>
   <script src="lib/webmidi.iife.js"></script>
+  <script src="lib/second-order-dynamics.js"></script>
+  <script src="lib/choreography.js"></script>
+  <script src="	https://cdn.jsdelivr.net/npm/culori"></script>
+  <script>
+    console.log(culori.rgb('salmon'));
+  </script>
   <script type="module">
     import { breezeid } from './lib/breezeid.js';
     window.breezeid = breezeid;
@@ -64,7 +70,7 @@ $config = require_once 'config/config.php';
   <script src="lib/matrix.js"></script>
   <script src="lib/vertex.js"></script>
   <script src="lib/a-path-finder.js"></script>
-  <script src="workers/worker-coordinator.js" defer></script>
+  <!-- <script src="workers/worker-coordinator.js" defer></script> -->
   <script src="utils/interface.js" defer></script>
   <script src="lib/paper-full.js"></script>
   <script src="utils/paper-helpers.js"></script>
@@ -132,6 +138,10 @@ $config = require_once 'config/config.php';
         <input type="range" style="width:100%" name="chan2" value="<?= $config['chan2'] ?>" id="chan2" min="0" max="127"
           step="1">
       </label>
+      <label class="full-width" for="chan3">chan3
+        <input type="range" style="width:100%" name="chan3" value="<?= $config['chan3'] ?>" id="chan3" min="0" max="127"
+          step="1">
+      </label>
     </fieldset>
     <fieldset>
       <legend>controls</legend>
@@ -154,6 +164,7 @@ $config = require_once 'config/config.php';
       <output id="output-chan0">chan0: <?= str_pad($config['chan0'], 3, "0", STR_PAD_LEFT) ?>/127</output>
       <output id="output-chan1">chan1: <?= str_pad($config['chan1'], 3, "0", STR_PAD_LEFT) ?>/127</output>
       <output id="output-chan2">chan2: <?= str_pad($config['chan2'], 3, "0", STR_PAD_LEFT) ?>/127</output>
+      <output id="output-chan3">chan3: <?= str_pad($config['chan3'], 3, "0", STR_PAD_LEFT) ?>/127</output>
     </div>
   </main>
   <canvas id="navigation" width="356" height="356"></canvas>
@@ -248,6 +259,7 @@ $config = require_once 'config/config.php';
         if (controller == 2) changeChanValue(null, 0, value);
         else if (controller == 3) changeChanValue(null, 1, value);
         else if (controller == 4) changeChanValue(null, 2, value);
+        else if (controller == 5) changeChanValue(null, 3, value);
         // console.log(`Received 'controlchange' message.`, e.message);
       }, { channels: [1] });
 

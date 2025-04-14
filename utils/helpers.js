@@ -71,47 +71,47 @@ const primeArray = [
 ];
 
 // https://www.youtube.com/watch?v=KPoeNZZ6H4s
-class SecondOrderDynamics {
-  /**
-   * Constructor to initialise the dynamics constants and state variables.
-   * @param {number} f - Frequency (how fast the system reacts).
-   * @param {number} z - Damping ratio (controls oscillations).
-   * @param {number} r - Responsiveness (how quickly the system reacts to changes).
-   * @param {number} x0 - Initial position.
-   */
-  constructor(f, z, r, x0) {
-    // Compute constants
-    this.k1 = z / (Math.PI * f);
-    this.k2 = 1 / (2 * Math.PI * f * (2 * Math.PI * f));
-    this.k3 = (r * z) / (2 * Math.PI * f);
+// class SecondOrderDynamics {
+//   /**
+//    * Constructor to initialise the dynamics constants and state variables.
+//    * @param {number} f - Frequency (how fast the system reacts).
+//    * @param {number} z - Damping ratio (controls oscillations).
+//    * @param {number} r - Responsiveness (how quickly the system reacts to changes).
+//    * @param {number} x0 - Initial position.
+//    */
+//   constructor(f, z, r, x0) {
+//     // Compute constants
+//     this.k1 = z / (Math.PI * f);
+//     this.k2 = 1 / (2 * Math.PI * f * (2 * Math.PI * f));
+//     this.k3 = (r * z) / (2 * Math.PI * f);
 
-    // Initialise variables
-    this.xp = x0; // Previous input
-    this.y = x0; // Current position
-    this.yd = 0; // Current velocity
-    return this.y;
-  }
+//     // Initialise variables
+//     this.xp = x0; // Previous input
+//     this.y = x0; // Current position
+//     this.yd = 0; // Current velocity
+//     return this.y;
+//   }
 
-  /**
-   * Update the position and velocity using second-order dynamics.
-   * @param {number} T - Time step (delta time).
-   * @param {number} x - Current input position.
-   * @param {number|null} xd - Current input velocity (optional).
-   * @returns {number} - Updated position.
-   */
-  update(T, x, xd = null) {
-    if (xd === null) {
-      // Estimate velocity if not provided
-      xd = (x - this.xp) / T;
-      this.xp = x;
-    }
+//   /**
+//    * Update the position and velocity using second-order dynamics.
+//    * @param {number} T - Time step (delta time).
+//    * @param {number} x - Current input position.
+//    * @param {number|null} xd - Current input velocity (optional).
+//    * @returns {number} - Updated position.
+//    */
+//   update(T, x, xd = null) {
+//     if (xd === null) {
+//       // Estimate velocity if not provided
+//       xd = (x - this.xp) / T;
+//       this.xp = x;
+//     }
 
-    // Integrate position by velocity
-    this.y += T * this.yd;
+//     // Integrate position by velocity
+//     this.y += T * this.yd;
 
-    // Integrate velocity by acceleration
-    this.yd += T * ((x + this.k3 * xd - this.y - this.k1 * this.yd) / this.k2);
+//     // Integrate velocity by acceleration
+//     this.yd += T * ((x + this.k3 * xd - this.y - this.k1 * this.yd) / this.k2);
 
-    return this.y; // Return the updated position
-  }
-}
+//     return this.y; // Return the updated position
+//   }
+// }
