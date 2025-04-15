@@ -10,8 +10,8 @@ return [
   'worker_active' => true,
   'debug' => true,
   'color_index' => 1,
-  'chan0' => 100,
-  'chan1' => 51,
-  'chan2' => 29,
-  'chan3' => 88,
+  'chan0' => 12,
+  'chan1' => 114,
+  'chan2' => 106,
+  'chan3' => 114,
 ];

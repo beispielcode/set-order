@@ -53,6 +53,18 @@ function roundToDecimal(value, decimal) {
   return Math.round(value * (1 / decimal)) / (1 / decimal);
 }
 
+const hexToRgb = (hex) => {
+  const bigint = parseInt(hex.slice(1), 16);
+  return [(bigint >> 16) & 255, (bigint >> 8) & 255, bigint & 255];
+};
+
+const rgbToHex = (rgb) => {
+  const r = Math.round(rgb[0]).toString(16).padStart(2, "0");
+  const g = Math.round(rgb[1]).toString(16).padStart(2, "0");
+  const b = Math.round(rgb[2]).toString(16).padStart(2, "0");
+  return `#${r}${g}${b}`;
+};
+
 // Array helpers
 Array.prototype.shuffle = function () {
   for (let i = this.length - 1; i > 0; i--) {
