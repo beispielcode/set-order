@@ -17,9 +17,16 @@ with (paper) {
   });
 
   let gridSize = view.viewSize.width / 32;
+  const scenesNumber = 2;
+  const scenePositions = new Array(scenesNumber + 1)
+    .fill(0)
+    .map((value, index) => Math.floor((index / scenesNumber) * 127));
 
   const sceneElements = [];
-
+  const sceneControlePoints = scenePositions.map((value, index) => ({
+    position: [Math.floor((index / scenesNumber) * 127), 0, 0, 0],
+    value: index,
+  }));
   // Scene 01 – Dot
 
   const scene01 = [];
@@ -63,8 +70,6 @@ with (paper) {
       [randomInt(-1, 3), randomInt(-1, 3)],
     ]),
   ];
-  console.log(s01_SquishArray);
-
   for (let i = 0; i < 45; i++) {
     const gridX = i % 9;
     const gridY = Math.floor(i / 9);
@@ -121,8 +126,15 @@ with (paper) {
 
     const attributeConfigs = [
       {
+        attribute: "scene",
+        axes: [0],
+        transitions: ["threshold"],
+        controlPoints: sceneControlePoints,
+      },
+      {
         attribute: "size",
         axes: [1],
+        dynamicContants: [{ f: 2.75, z: 1.25, r: 0 }],
         transitions: ["threshold"],
         controlPoints: s01_SizeArray.map((size, index) => ({
           position: [0, Math.floor((index / steps) * 127), 0, 0],
@@ -155,28 +167,6 @@ with (paper) {
           position: [0, Math.floor((index / steps) * 127), 0, 0],
           value: value,
         })),
-        // [
-        //   {
-        //     position: [0, 0, 0, 127],
-        //     value: distancesFromCenter[0],
-        //   },
-        //   {
-        //     position: [0, Math.floor((1 / steps) * 127), 0, 127],
-        //     value: distancesFromCenter[1],
-        //   },
-        //   {
-        //     position: [0, Math.floor((2 / steps) * 127), 0, 127],
-        //     value: distancesFromCenter[2],
-        //   },
-        //   {
-        //     position: [0, Math.floor((3 / steps) * 127), 0, 127],
-        //     value: distancesFromCenter[3],
-        //   },
-        //   {
-        //     position: [0, Math.floor((4 / steps) * 127), 0, 127],
-        //     value: distancesFromCenter[4],
-        //   },
-        // ],
       },
       {
         attribute: "squish",
@@ -217,23 +207,219 @@ with (paper) {
           //   this.size + map(this.rotation, 0, 45, 0, (Math.sqrt(2) - 1) / 2);
           // rect.scaling = this.size;
           rect.scaling = [
-            this.size + this.squish[0],
-            this.size + this.squish[1],
+            this.size * (1 - this.scene) +
+              this.squish[0] * (1 - this.scene) +
+              32 * this.scene,
+            this.size * (1 - this.scene) +
+              this.squish[1] * (1 - this.scene) +
+              18 * this.scene,
           ];
-          // console.log(this.squish);
 
           // rect.rotation = this.rotation;
-          rect.rotation = this.rotation * this.rotationScale;
+          rect.rotation = this.rotation * this.rotationScale * (1 - this.scene);
           rect.position = [
-            gridSize * this.position[0],
-            gridSize * this.position[1],
+            gridSize * this.position[0] * (1 - this.scene) +
+              gridSize * 16 * this.scene,
+            gridSize * this.position[1] * (1 - this.scene) +
+              gridSize * 9 * this.scene,
           ];
+          if (this.scene > 1 - 1e-6) {
+            this.element.remove();
+            background.fillColor = "#000";
+          } else {
+            project.activeLayer.addChild(this.element);
+            background.fillColor = colors[0];
+          }
+        }
+      )
+    );
+  }
+  sceneElements.push(...scene01);
+
+  // Scene 02 – Snakes
+
+  const scene02 = [];
+  const s02_dotTemplate = new Path.Rectangle({
+    point: [0, 0],
+    size: view.viewSize.width,
+    fillColor: "#fff",
+    applyMatrix: false,
+    // selected: true,
+  });
+  const s02_gridSize = view.viewSize.width / 80;
+  const s02_dotSymbolSizeArray = [80, 80];
+  const s02_zoomLevels = [5, 3, 2, 1];
+  const s02_dotSymbol = new Choreography(
+    new Symbol(s02_dotTemplate),
+    [
+      {
+        attribute: "scene",
+        axes: [0],
+        transitions: ["threshold"],
+        controlPoints: sceneControlePoints,
+      },
+      {
+        attribute: "size",
+        axes: [1],
+        // dynamicContants: [{ f: 2.5, z: 1.5, r: 0 }],
+        transitions: ["threshold"],
+        // controlPoints: s02_dotSymbolSizeArray.map((size, index) => ({
+        //   position: [0, Math.floor((index / scenesNumber) * 127), 0, 0],
+        //   value: size,
+        // })),
+        controlPoints: s02_zoomLevels.map((zoom, index) => ({
+          position: [
+            0,
+            Math.floor((index / s02_zoomLevels.length) * 127),
+            0,
+            0,
+          ],
+          value: zoom,
+        })),
+      },
+    ],
+    function () {
+      const definition = this.element.definition;
+      definition.scaling = (1 / 80) * this.size;
+    }
+  );
+
+  scene02.push(s02_dotSymbol);
+
+  for (let i = 0; i < 37 * 19; i++) {
+    const gridX = i % 37;
+    const gridY = Math.floor(i / 37);
+    const distanceFromCenter = [Math.abs(gridX - 18), Math.abs(gridY - 9)];
+    const visibilityArray = [];
+    if (distanceFromCenter[0] < 3 && distanceFromCenter[1] < 2)
+      visibilityArray.push(1);
+    else visibilityArray.push(0);
+    if (distanceFromCenter[0] < 5 && distanceFromCenter[1] < 3)
+      visibilityArray.push(1);
+    else visibilityArray.push(0);
+    if (distanceFromCenter[0] < 8 && distanceFromCenter[1] < 5)
+      visibilityArray.push(1);
+    else visibilityArray.push(0);
+    visibilityArray.push(1);
+    const padding = [
+      [(view.viewSize.width / 80) * 20, (view.viewSize.width / 80) * 12.5],
+      [(view.viewSize.width / 80) * 16.5, (view.viewSize.width / 80) * 22],
+      [(view.viewSize.width / 80) * 12, (view.viewSize.width / 80) * 14.5],
+      [(view.viewSize.width / 80) * 4, (view.viewSize.width / 80) * 4.5],
+    ];
+    const offset = [
+      [16, 8],
+      [14, 9],
+      [11, 7],
+      [0, 0],
+    ];
+    scene02.push(
+      new Choreography(
+        s02_dotSymbol.element.place([0, 0]),
+        [
+          {
+            attribute: "scene",
+            axes: [0],
+            transitions: ["threshold"],
+            controlPoints: sceneControlePoints,
+          },
+          {
+            attribute: "visibility",
+            axes: [1],
+            transitions: ["threshold"],
+            controlPoints: visibilityArray.map((visibility, index) => ({
+              position: [
+                0,
+                Math.floor((index / visibilityArray.length) * 127),
+                0,
+                0,
+              ],
+              value: visibility,
+            })),
+          },
+          {
+            attribute: "position",
+            axes: [1],
+            transitions: ["threshold"],
+            controlPoints: visibilityArray.map((visibility, index) => {
+              const zoom = s02_zoomLevels[index];
+              const x =
+                (((gridX - offset[index][0]) * view.viewSize.width) / 80) *
+                  2 *
+                  zoom +
+                padding[index][0];
+              const y =
+                (((gridY - offset[index][1]) * view.viewSize.width) / 80) *
+                  2 *
+                  zoom +
+                padding[index][1];
+              return {
+                position: [
+                  0,
+                  Math.floor((index / visibilityArray.length) * 127),
+                  0,
+                  0,
+                ],
+                value: [x, y],
+              };
+            }),
+            // controlPoints: [
+            //   {
+            //     position: [0, 0, 0, 0],
+            //     value: [
+            //       ((gridX * view.viewSize.width) / s02_dotSymbolSizeArray[0]) *
+            //         2 *
+            //         s02_zoomLevels[0] +
+            //         (view.viewSize.width / s02_dotSymbolSizeArray[0]) * 4,
+            //       ((gridY * view.viewSize.width) / s02_dotSymbolSizeArray[0]) *
+            //         2 *
+            //         s02_zoomLevels[0] +
+            //         (view.viewSize.width / s02_dotSymbolSizeArray[0]) * 4.5,
+            //     ],
+            //   },
+            //   {
+            //     position: [0, 63, 0, 0],
+            //     value: [
+            //       ((gridX * view.viewSize.width) / s02_dotSymbolSizeArray[1]) *
+            //         2 *
+            //         s02_zoomLevels[1] +
+            //         (view.viewSize.width / s02_dotSymbolSizeArray[1]) * 4,
+            //       ((gridY * view.viewSize.width) / s02_dotSymbolSizeArray[1]) *
+            //         2 *
+            //         s02_zoomLevels[1] +
+            //         (view.viewSize.width / s02_dotSymbolSizeArray[1]) * 4.5,
+            //     ],
+            //   },
+            // ],
+          },
+        ],
+        function () {
+          const instance = this.element;
+          instance.position = this.position;
+          instance.opacity = this.scene;
+          // instance.scaling = cap(
+          //   this.scene ** 4 *
+          //     cap(map(this.visibility, 0.75, 1, 0, 1), 0, 1) ** 4,
+          //   1e-6,
+          //   1
+          // );
+          instance.scaling = cap(
+            this.scene ** 4 * this.visibility ** 4,
+            1e-6,
+            1
+          );
+          // if (!this.visibility || this.scene < 1e-6 || this.scene > 2) {
+          if (this.scene < 1e-6 || this.scene > 2) {
+            this.element.remove();
+          } else {
+            project.activeLayer.addChild(this.element);
+          }
         }
       )
     );
   }
 
-  sceneElements.push(...scene01);
+  sceneElements.push(...scene02);
 
   // Define the onFrame event handler for animation and interaction
   let lastInteractionTime = performance.now(); // Ensure this is defined

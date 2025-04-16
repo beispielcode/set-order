@@ -197,6 +197,7 @@ main {
 main:fullscreen #output-wrapper {
   width: 100vw;
   color: #fff;
+  display: none;
 }
 
 div > canvas {
