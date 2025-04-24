@@ -236,9 +236,8 @@ $config = require_once 'config/config.php';
     if (WebMidi.inputs.length < 1) {
       console.log("No device detected.");
     } else {
-      WebMidi.inputs.forEach((device, index) => {
-        console.log(`${index}: ${device.name}`);
-      });
+      WebMidi.inputs.forEach(input => console.log(input.manufacturer, input.name));
+      WebMidi.outputs.forEach(output => console.log(output.manufacturer, output.name));
     }
 
     const device = WebMidi.inputs[0];
@@ -256,12 +255,25 @@ $config = require_once 'config/config.php';
       device.addListener("controlchange", e => {
         const { message } = e;
         const [statusByte, controller, value] = message.data;
-        if (controller == 2) changeChanValue(null, 0, value);
-        else if (controller == 3) changeChanValue(null, 1, value);
-        else if (controller == 4) changeChanValue(null, 2, value);
-        else if (controller == 5) changeChanValue(null, 3, value);
+        // if (controller == 2) changeChanValue(null, 1, value);
+        // else if (controller == 3) changeChanValue(null, 2, value);
+        // else if (controller == 4) changeChanValue(null, 3, value);
+        // else if (controller == 5) changeChanValue(null, 0, value);
+        // if (controller == 2) changeChanValue(null, 0, value);
+        // else if (controller == 3) changeChanValue(null, 1, value);
+        // else if (controller == 4) changeChanValue(null, 2, value);
+        // else if (controller == 5) changeChanValue(null, 3, value);
+        // if (controller == 0) changeChanValue(null, 1, value);
+        // else if (controller == 1) changeChanValue(null, 2, value);
+        // else if (controller == 2) changeChanValue(null, 3, value);
+        // else if (controller == 3) changeChanValue(null, 0, value);
+        if (controller == 0) changeChanValue(null, 0, value);
+        else if (controller == 1) changeChanValue(null, 1, value);
+        else if (controller == 2) changeChanValue(null, 2, value);
+        else if (controller == 3) changeChanValue(null, 3, value);
         // console.log(`Received 'controlchange' message.`, e.message);
-      }, { channels: [1] });
+        // }, { channels: [1] });
+      });
 
   }
 

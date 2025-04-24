@@ -29,6 +29,8 @@ function handleKeyDown(e) {
       if (!e.shiftKey && !e.metaKey && !e.altKey)
         window.onmousewheel = (e) => changeChanValue(e, 2);
       break;
+    case "s":
+      if (!e.shiftKey && e.metaKey && !e.altKey) saveCanvas(e);
     default:
       break;
   }
@@ -338,3 +340,28 @@ function animate() {
 setTimeout(() => {
   animate(); // Start the animation
 }, 200);
+
+function saveCanvas(e, fileName) {
+  e.preventDefault();
+  if (sketchLoader.currentLib === "p5") {
+    const canvas = sketchLoader.currentSketch.canvas;
+    const dataURL = canvas.toDataURL("image/png");
+    const link = document.createElement("a");
+    link.download = "canvas.png";
+    link.href = dataURL;
+    link.click();
+  } else if (sketchLoader.currentLib === "paper") {
+    if (!fileName) {
+      fileName = `paper-${sketchSelect.value}-${channels.join("-")}.svg`;
+    }
+
+    var url =
+      "data:image/svg+xml;utf8," +
+      encodeURIComponent(paper.project.exportSVG({ asString: true }));
+
+    var link = document.createElement("a");
+    link.download = fileName;
+    link.href = url;
+    link.click();
+  }
+}
