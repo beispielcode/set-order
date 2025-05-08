@@ -173,8 +173,8 @@ with (paper) {
       },
       {
         attribute: "squish",
-        axes: [1, 3],
-        transitions: ["threshold", "steps"],
+        axes: [3, 1],
+        transitions: ["steps", "threshold"],
         controlPoints: squishes.reduce(
           (acc, squishArray, squishArrayIndex) =>
             acc.concat(
@@ -219,6 +219,7 @@ with (paper) {
           ];
 
           // rect.rotation = this.rotation;
+          rect.selected = true;
           rect.rotation = this.rotation * this.rotationScale * (1 - this.scene);
           rect.position = [
             gridSize * this.position[0] * (1 - this.scene) +
@@ -249,7 +250,6 @@ with (paper) {
     size: s02_gridSize,
     fillColor: "#fff",
     applyMatrix: false,
-    // selected: true,
   });
   const s02_dotSymbol = new Choreography(
     new Symbol(s02_dotTemplate),
@@ -290,6 +290,7 @@ with (paper) {
         ],
         function () {
           const instance = this.element;
+          instance.selected = true;
           // if (this.scene < 1e-6 || this.scene > 2) {
           if (this.scene < 1e-6 || this.scene > 3) {
             this.element.remove();
@@ -404,6 +405,7 @@ with (paper) {
               const isActor = this.scene > 1e-6 && this.scene < 2;
               const maxRadius = roundToDecimal(this.radius, 0.125);
               const skew = this.skew;
+              instance.selected = true;
               // instance.scaling.x = cap(visibility, 1e-6, 1);
               // instance.scaling.y = cap(radius, 1e-6, 1);
               let position = s02_padding.add(gridPos);
@@ -472,7 +474,7 @@ with (paper) {
             : 0
         )
     );
-  console.log(s02_offsetArray);
+  // console.log(s02_offsetArray);
 
   for (let y = 0; y < 19; y++) {
     for (let x = 0; x < 36; x++) {
@@ -571,7 +573,7 @@ with (paper) {
             const rotationScale = this.rotationScale;
             const movement = Math.round(this.movement);
             const isActor = this.scene > 1 + 1e-6 && this.scene < 3;
-
+            instance.selected = true;
             instance.scaling.y =
               this.scene < 2
                 ? cap((this.scene - 1) ** 2, 1e-6, 1)
@@ -615,7 +617,7 @@ with (paper) {
     }
   }
 
-  sceneElements.push(...scene02);
+  // sceneElements.push(...scene02);
 
   // Define the onFrame event handler for animation and interaction
   let lastInteractionTime = performance.now(); // Ensure this is defined
@@ -632,4 +634,7 @@ with (paper) {
       sceneElement.update();
     });
   };
+  sceneElements.forEach((sceneElement) => {
+    sceneElement.update();
+  });
 }

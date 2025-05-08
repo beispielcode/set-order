@@ -57,6 +57,10 @@ function floorToDecimal(value, decimal) {
   return Math.floor(value * (1 / decimal)) / (1 / decimal);
 }
 
+function ceilToDecimal(value, decimal) {
+  return Math.ceil(value * (1 / decimal)) / (1 / decimal);
+}
+
 const hexToRgb = (hex) => {
   const bigint = parseInt(hex.slice(1), 16);
   return [(bigint >> 16) & 255, (bigint >> 8) & 255, bigint & 255];

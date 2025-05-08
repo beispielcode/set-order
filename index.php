@@ -57,15 +57,15 @@ $config = require_once 'config/config.php';
   <script src="utils/Bezier-easing.js"></script>
   <script src="lib/webmidi.iife.js"></script>
   <script src="lib/second-order-dynamics.js"></script>
-  <script src="lib/choreography.js"></script>
   <script src="	https://cdn.jsdelivr.net/npm/culori"></script>
-  <script>
+  <script src="lib/choreography.js"></script>
+  <!-- <script>
     console.log(culori.rgb('salmon'));
-  </script>
-  <script type="module">
+  </script> -->
+  <!-- <script type="module">
     import { breezeid } from './lib/breezeid.js';
     window.breezeid = breezeid;
-  </script>
+  </script> -->
   <script src="lib/vec.js"></script>
   <script src="lib/matrix.js"></script>
   <script src="lib/vertex.js"></script>

@@ -29,6 +29,10 @@ function handleKeyDown(e) {
       if (!e.shiftKey && !e.metaKey && !e.altKey)
         window.onmousewheel = (e) => changeChanValue(e, 2);
       break;
+    case "4":
+      if (!e.shiftKey && !e.metaKey && !e.altKey)
+        window.onmousewheel = (e) => changeChanValue(e, 3);
+      break;
     case "s":
       if (!e.shiftKey && e.metaKey && !e.altKey) saveCanvas(e);
     default:

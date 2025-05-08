@@ -50,3 +50,47 @@ function calculateConvexHull(points) {
   // Combine lower and upper hull to get the full convex hull
   return lower.concat(upper);
 }
+
+/**
+ * Rotates a 3D vector around an axis by the specified angle.
+ * @param {number[]} vect - The 3D vector to rotate [x, y, z].
+ * @param {number[]} axis - The axis to rotate around [x, y, z].
+ * @param {number} angle - The angle to rotate by in radians.
+ * @returns {number[]} - The rotated vector [x, y, z].
+ */
+function rotateAround(vect, axis, angle) {
+  // Helper functions for vector operations
+  function dot(a, b) {
+    return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+  }
+  function cross(a, b) {
+    return [
+      a[1] * b[2] - a[2] * b[1],
+      a[2] * b[0] - a[0] * b[2],
+      a[0] * b[1] - a[1] * b[0],
+    ];
+  }
+  function scale(v, s) {
+    return [v[0] * s, v[1] * s, v[2] * s];
+  }
+  function add(a, b) {
+    return [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
+  }
+  function norm(v) {
+    const len = Math.sqrt(dot(v, v));
+    return len === 0 ? [0, 0, 0] : scale(v, 1 / len);
+  }
+
+  // Ensure axis is a unit vector
+  const k = norm(axis);
+
+  // Rodrigues' rotation formula
+  const cosA = Math.cos(angle);
+  const sinA = Math.sin(angle);
+
+  const term1 = scale(vect, cosA);
+  const term2 = scale(cross(k, vect), sinA);
+  const term3 = scale(k, dot(k, vect) * (1 - cosA));
+
+  return add(add(term1, term2), term3);
+}
