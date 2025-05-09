@@ -1,6 +1,0 @@
-{
-  "dependencies": {
-    "@ipld/car": "^5.4.0",
-    "multiformats": "^13.3.2"
-  }
-}

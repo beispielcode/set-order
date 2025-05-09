@@ -35,94 +35,38 @@ $config = require_once 'config/config.php';
   <script>
     <?php
     // Gets all sketches as file names
-    $p5sketches = array_reverse(array_map(function ($string) {
-      return preg_replace(['/sketches\/p5-sketches\//', '/\.js$/'], '', $string);
-    }, glob('sketches/p5-sketches/*.js')));
-    $paperSketches = array_reverse(array_map(function ($string) {
-      return preg_replace(['/sketches\/paper-sketches\//', '/\.js$/'], '', $string);
-    }, glob('sketches/paper-sketches/*.js')));
+    $sketches = array_reverse(array_map(function ($string) {
+      return preg_replace(['/sketches\//', '/\.js$/'], '', $string);
+    }, glob('sketches/*.js')));
     ?>
     // Populate sketches 
-    const sketches = {
-      p5: ['<?= implode("', '", $p5sketches) ?>'],
-      paper: ['<?= implode("', '", $paperSketches) ?>']
-    };
-    const lastLoadedSketch = '<?= $config['last_loaded_sketch'][1] ?>';
-    let colorIndex = <?= $config['color_index'] ?>;
-    let workerActive = <?= $config['worker_active'] ? 'true' : 'false' ?>;
+    const sketches = ['<?= implode("', '", $sketches) ?>'];
+    const lastLoadedSketch = '<?= $config['last_loaded_sketch'] ?>';
   </script>
   <script src="sketch-loader.js"></script>
   <script src="utils/helpers.js"></script>
   <script src="utils/perlin.js"></script>
-  <script src="utils/Bezier-easing.js"></script>
   <script src="lib/webmidi.iife.js"></script>
   <script src="lib/second-order-dynamics.js"></script>
   <script src="	https://cdn.jsdelivr.net/npm/culori"></script>
   <script src="lib/choreography.js"></script>
-  <!-- <script>
-    console.log(culori.rgb('salmon'));
-  </script> -->
-  <!-- <script type="module">
-    import { breezeid } from './lib/breezeid.js';
-    window.breezeid = breezeid;
-  </script> -->
-  <script src="lib/vec.js"></script>
-  <script src="lib/matrix.js"></script>
-  <script src="lib/vertex.js"></script>
-  <script src="lib/a-path-finder.js"></script>
-  <!-- <script src="workers/worker-coordinator.js" defer></script> -->
   <script src="utils/interface.js" defer></script>
   <script src="lib/paper-full.js"></script>
   <script src="utils/paper-helpers.js"></script>
-  <!-- <script src="utils/navigation.js" defer></script> -->
-  <!-- <script src="https://cdn.jsdelivr.net/npm/p5"></script> -->
-  <!-- <script src="https://cdn.jsdelivr.net/npm/p5.capture"></script> -->
-
-  <!-- <script type="module" src="utils/at-protocol.js"></script> -->
-
 </head>
 
 <body>
   <div id="controls">
     <fieldset id="sketch-loader">
       <legend>sketch loader</legend>
-      <select id="library-select" default="<?= $config['last_loaded_sketch'][0] ?>">
-        <option value="p5" <?php echo $config['last_loaded_sketch'][0] == 'p5' ? 'selected="true"' : ''; ?>>p5.js
-        </option>
-        <option value="paper" <?php echo $config['last_loaded_sketch'][0] == 'paper' ? 'selected="true"' : ''; ?>>
-          Paper.js
-        </option>
-      </select>
-      <select id="sketch-select" default="<?= $config['last_loaded_sketch'][1] ?>"></select>
-      <button id="load-btn" class="full-width">Load Sketch</button>
-      <span id="version-info" class="full-width"></span>
-    </fieldset>
-    <fieldset id="color-wrapper">
-      <legend>Colours</legend>
       <?php
-      foreach ($config['colors'] as $key => $color) {
+      foreach ($sketches as $sketch) {
         ?>
-        <div class="color-scheme full-width">
-          <div class="color">
-            <input type="color" name="color-<?= $key ?>a" id="color-<?= $key ?>a" value="<?= $color[0] ?>">
-            <input type="text" name="hex-<?= $key ?>a" id="hex-<?= $key ?>a" value="<?= $color[0] ?>">
-          </div>
-          <div class="color">
-            <input type="color" name="color-<?= $key ?>b" id="color-<?= $key ?>b" value="<?= $color[1] ?>">
-            <input type="text" name="hex-<?= $key ?>b" id="hex-<?= $key ?>b" value="<?= $color[1] ?>">
-          </div>
-          <div class="color">
-            <input type="color" name="color-<?= $key ?>c" id="color-<?= $key ?>c" value="<?= $color[2] ?>">
-            <input type="text" name="hex-<?= $key ?>c" id="hex-<?= $key ?>c" value="<?= $color[2] ?>">
-          </div>
-          <input type="radio" name="color-active" <?= intval($key) == $config['color_index'] ? 'checked' : '' ?>
-            id="color-active-<?= $key ?>">
-          <button id="delete-scheme-<?= $key ?>" class="delete-button">delete</button>
-        </div>
+        <label class="full-width" for="sketch-<?= $sketch ?>"><input <?= $sketch == $config['last_loaded_sketch'] ? 'checked' : '' ?> type="radio" value="<?= $sketch ?>" name="sketch" id="sketch-<?= $sketch ?>">
+          <?= $sketch ?></label>
         <?php
       }
       ?>
-      <button id="add-color" class="full-width">add colour</button>
     </fieldset>
     <fieldset>
       <legend>MIDI emulator</legend>
@@ -143,21 +87,6 @@ $config = require_once 'config/config.php';
           step="1">
       </label>
     </fieldset>
-    <fieldset>
-      <legend>controls</legend>
-      <label class="full-width" for="workers-active">
-        Active workers
-        <input type="checkbox" name="workers-active" id="workers-active" <?= isset($config['worker_active']) && $config['worker_active'] ? 'checked' : '' ?>>
-      </label>
-      <label class="full-width" for="debug-active">
-        Active debug
-        <input type="checkbox" name="debug-active" id="debug-active" <?= isset($config['debug']) && $config['debug'] ? 'checked' : '' ?>>
-      </label>
-      <label class="full-width" for="recording-active">
-        Recording delay
-        <input type="checkbox" name="recording-active" id="recording-active" <?= isset($config['recording']) && $config['recording'] ? 'checked' : '' ?>>
-      </label>
-    </fieldset>
   </div>
   <main>
     <div id="output-wrapper">
@@ -167,7 +96,6 @@ $config = require_once 'config/config.php';
       <output id="output-chan3">chan3: <?= str_pad($config['chan3'], 3, "0", STR_PAD_LEFT) ?>/127</output>
     </div>
   </main>
-  <canvas id="navigation" width="356" height="356"></canvas>
   <?php
 
   // listens for POST request
@@ -223,58 +151,50 @@ $config = require_once 'config/config.php';
   ?>
 </body>
 <script type="module">
+  if (navigator.requestMIDIAccess) {
 
-  // Enable WEBMIDI.js and trigger the onEnabled() function when ready
-  WebMidi
-    .enable()
-    .then(onEnabled)
-    .catch(err => alert(err));
+    // Enable WEBMIDI.js and trigger the onEnabled() function when ready
+    WebMidi
+      .enable()
+      .then(onEnabled)
+      .catch(err => alert(err));
 
-  // Function triggered when WEBMIDI.js is ready
-  function onEnabled() {
+    // Function triggered when WEBMIDI.js is ready
+    function onEnabled() {
 
-    if (WebMidi.inputs.length < 1) {
-      console.log("No device detected.");
-    } else {
-      WebMidi.inputs.forEach(input => console.log(input.manufacturer, input.name));
-      WebMidi.outputs.forEach(output => console.log(output.manufacturer, output.name));
+      if (WebMidi.inputs.length < 1) {
+        console.log("No device detected.");
+      } else {
+        WebMidi.inputs.forEach(input => console.log(input.manufacturer, input.name));
+        WebMidi.outputs.forEach(output => console.log(output.manufacturer, output.name));
+      }
+
+      const device = WebMidi.inputs[0];
+      if (device)
+        device.addListener("controlchange", e => {
+          const { message } = e;
+          const [statusByte, controller, value] = message.data;
+          // if (controller == 2) changeChanValue(null, 1, value);
+          // else if (controller == 3) changeChanValue(null, 2, value);
+          // else if (controller == 4) changeChanValue(null, 3, value);
+          // else if (controller == 5) changeChanValue(null, 0, value);
+          // if (controller == 2) changeChanValue(null, 0, value);
+          // else if (controller == 3) changeChanValue(null, 1, value);
+          // else if (controller == 4) changeChanValue(null, 2, value);
+          // else if (controller == 5) changeChanValue(null, 3, value);
+          // if (controller == 0) changeChanValue(null, 1, value);
+          // else if (controller == 1) changeChanValue(null, 2, value);
+          // else if (controller == 2) changeChanValue(null, 3, value);
+          // else if (controller == 3) changeChanValue(null, 0, value);
+          if (controller == 0) changeChanValue(null, 0, value);
+          else if (controller == 1) changeChanValue(null, 1, value);
+          else if (controller == 2) changeChanValue(null, 2, value);
+          else if (controller == 3) changeChanValue(null, 3, value);
+          // console.log(`Received 'controlchange' message.`, e.message);
+          // }, { channels: [1] });
+        });
+
     }
-
-    const device = WebMidi.inputs[0];
-    console.log(device);
-
-    // const device = WebMidi.getInputByName("TYPE NAME HERE!")
-    // device.channels.forEach((channel, index) => {
-    //   channel.addListener("noteon", e => {
-    //     console.log(e);
-
-    //     console.log(`${e.note.name}`);
-    //   });
-    // })
-    if (device)
-      device.addListener("controlchange", e => {
-        const { message } = e;
-        const [statusByte, controller, value] = message.data;
-        // if (controller == 2) changeChanValue(null, 1, value);
-        // else if (controller == 3) changeChanValue(null, 2, value);
-        // else if (controller == 4) changeChanValue(null, 3, value);
-        // else if (controller == 5) changeChanValue(null, 0, value);
-        // if (controller == 2) changeChanValue(null, 0, value);
-        // else if (controller == 3) changeChanValue(null, 1, value);
-        // else if (controller == 4) changeChanValue(null, 2, value);
-        // else if (controller == 5) changeChanValue(null, 3, value);
-        // if (controller == 0) changeChanValue(null, 1, value);
-        // else if (controller == 1) changeChanValue(null, 2, value);
-        // else if (controller == 2) changeChanValue(null, 3, value);
-        // else if (controller == 3) changeChanValue(null, 0, value);
-        if (controller == 0) changeChanValue(null, 0, value);
-        else if (controller == 1) changeChanValue(null, 1, value);
-        else if (controller == 2) changeChanValue(null, 2, value);
-        else if (controller == 3) changeChanValue(null, 3, value);
-        // console.log(`Received 'controlchange' message.`, e.message);
-        // }, { channels: [1] });
-      });
-
   }
 
 </script>

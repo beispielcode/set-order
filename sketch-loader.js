@@ -1,7 +1,6 @@
 // sketch-loader.js
 const sketchLoader = {
   currentSketch: null,
-  currentLib: null,
 
   addScript: function (src) {
     const script = document.createElement("script");
@@ -23,37 +22,14 @@ const sketchLoader = {
     }
   },
 
-  // Load a p5.js sketch
-  loadP5Sketch: function (sketchName) {
-    updateConfig({ last_loaded_sketch: ["p5", sketchName] });
-    this.unloadCurrent();
-    this.currentLib = "p5";
-
-    // Create script elements
-    const libScript = this.addScript("lib/p5.js");
-    libScript.onload = () => {
-      this.addScript(`sketches/p5-sketches/${sketchName}.js`);
-      this.addScript(`utils/p5-helpers.js`);
-      // if (recorder) this.addScript("https://cdn.jsdelivr.net/npm/p5.capture");
-    };
-
-    // Create canvas container
-    const container = document.createElement("div");
-    container.id = "p5-container";
-    container.classList.add("canvas-wrapper");
-    document.body.querySelector("main").appendChild(container);
-
-    this.currentSketch = {
-      scripts: this.currentSketch.scripts,
-      canvas: container,
-    };
-  },
-
   // Load a Paper.js sketch
-  loadPaperSketch: function (sketchName) {
-    updateConfig({ last_loaded_sketch: ["paper", sketchName] });
+  loadSketch: function (sketchName) {
+    updateConfig({ last_loaded_sketch: sketchName });
+    changeChanValue(null, 0, 0);
+    changeChanValue(null, 1, 0);
+    changeChanValue(null, 2, 0);
+    changeChanValue(null, 3, 0);
     this.unloadCurrent();
-    this.currentLib = "paper";
 
     // Create canvas
     const container = document.createElement("div");
@@ -71,7 +47,7 @@ const sketchLoader = {
     // Create script elements
     // const libScript = this.addScript("lib/paper-full.js");
     // libScript.onload = () => {
-    this.addScript(`sketches/paper-sketches/${sketchName}.js`);
+    this.addScript(`sketches/${sketchName}.js`);
     // this.addScript(`utils/paper-helpers.js`);
     // };
 
@@ -94,18 +70,17 @@ const sketchLoader = {
       });
     }
 
-    // Clean up based on library type
-    if (this.currentLib === "p5") {
-      // Clean up p5 instance
-      if (window.myP5) {
-        try {
-          window.myP5.remove();
-          delete window.myP5;
-        } catch (e) {
-          console.warn("Error removing p5 instance:", e);
-        }
+    // Clean up
+    // Clean up p5 instance
+    if (window.myP5) {
+      try {
+        window.myP5.remove();
+        delete window.myP5;
+      } catch (e) {
+        console.warn("Error removing p5 instance:", e);
       }
-    } else if (this.currentLib === "paper") {
+    }
+    if (this.currentLib === "paper") {
       // Clean up Paper.js
       if (window.paper) {
         try {

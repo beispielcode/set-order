@@ -7,8 +7,8 @@ function handleKeyDown(e) {
       if (
         !e.shiftKey &&
         !e.metaKey &&
-        !e.altKey &&
-        !["INPUT", "TEXTAREA"].includes(document.activeElement.tagName)
+        !e.altKey
+        // && !["INPUT", "TEXTAREA"].includes(document.activeElement.tagName)
       ) {
         // request full screen
         e.preventDefault();
@@ -45,171 +45,6 @@ window.addEventListener("keyup", handleKeyUp);
 function handleKeyUp(e) {
   window.onmousewheel = null;
 }
-
-const librarySelect = document.getElementById("library-select");
-const sketchSelect = document.getElementById("sketch-select");
-const loadBtn = document.getElementById("load-btn");
-const versionInfo = document.getElementById("version-info");
-let colorFields = document.querySelectorAll(".color-scheme");
-const saveColorsButton = document.getElementById("save-colors");
-const addColorButton = document.getElementById("add-color");
-
-let colorSchemes = Array.from(colorFields).map((group) =>
-  Array.from(group.querySelectorAll("input[type='color']")).map(
-    (input) => input.value
-  )
-);
-let colors = colorSchemes[colorIndex];
-
-function initColorSchemes(group, index) {
-  const activeInput = group.querySelector("input[name='color-active']");
-  const colorInputs = group.querySelectorAll("input[type='color']");
-  const colorInputTexts = group.querySelectorAll("input[type='text']");
-  const deleteButton = group.querySelector("button.delete-button");
-  function updateColorScheme(serverSide = true, updateIndex = false) {
-    colorSchemes[index] = Array.from(colorInputs).map((input) => input.value);
-    if (activeInput.checked) colors = colorSchemes[index];
-    if (serverSide && !updateIndex) updateConfig({ colors: colorSchemes });
-    if (serverSide && updateIndex)
-      updateConfig({ colors: colorSchemes, color_index: index });
-  }
-  const toHex = (str) =>
-    `#${str.replaceAll(/[^0-9a-fA-F]/g, "").substring(0, 6)}`;
-  const expandHex = (str) => {
-    let expanded = str.replaceAll("#", "");
-    if (expanded.length < 3) return `#${expanded.repeat(6 / expanded.length)}`;
-    return `#${expanded.split("").reduce((acc, x) => acc + x + x, "")}`;
-  };
-  activeInput.onchange = () => updateColorScheme(true, true);
-  colorInputs.forEach((input, inputIndex) => {
-    input.onchange = () => updateColorScheme();
-    input.oninput = () => {
-      if (activeInput.checked) colors[index][inputIndex] = input.value;
-      if (colorInputTexts[inputIndex].value != input.value)
-        colorInputTexts[inputIndex].value = input.value;
-      updateColorScheme(false);
-    };
-  });
-  colorInputTexts.forEach((input, inputIndex) => {
-    input.oninput = () => {
-      const sanitised = toHex(input.value);
-      input.value = sanitised;
-      if (
-        sanitised.match(/^#[0-9a-fA-F]{6}$/i) &&
-        colorInputs[inputIndex].value != sanitised
-      )
-        colorInputs[inputIndex].value = sanitised;
-      else if (sanitised.match(/^#[0-9a-fA-F]{1,3}$/i))
-        colorInputs[inputIndex].value = expandHex(sanitised);
-      else return;
-      updateColorScheme();
-    };
-    input.onblur = () => {
-      if (input.value.match(/^#[0-9a-fA-F]{1,3}$/i)) {
-        input.value = expandHex(toHex(input.value));
-        updateColorScheme();
-      }
-    };
-  });
-  deleteButton.onclick = () => {
-    group.remove();
-    colorFields = document.querySelectorAll(".color-scheme");
-    colorSchemes.splice(index, 1);
-    updateConfig({ colors: colorSchemes });
-  };
-}
-
-colorFields.forEach((group, index) => initColorSchemes(group, index));
-
-addColorButton.addEventListener("click", () => {
-  const lastColorField = colorFields[colorFields.length - 1];
-  const newIndex = colorFields.length;
-  const newColorScheme = lastColorField.cloneNode(true);
-  newColorScheme.querySelectorAll("input, button").forEach((input) => {
-    if (input.name) input.name = input.name.replaceAll(newIndex - 1, newIndex);
-    input.id = input.id.replaceAll(newIndex - 1, newIndex);
-  });
-
-  Array.from(newColorScheme.querySelectorAll("input[type='color']")).forEach(
-    (input, index) => {
-      const color = `#${"ff".padEnd(6 - index * 2, "0").padStart(6, "0")}`;
-      input.value = color;
-      input.nextElementSibling.value = color;
-    }
-  );
-  lastColorField.after(newColorScheme);
-
-  colorFields = document.querySelectorAll(".color-scheme");
-  colorSchemes.push(
-    Array.from(newColorScheme.querySelectorAll("input[type='color']")).map(
-      (input) => input.value
-    )
-  );
-  Array.from(document.querySelectorAll("input[name='color-active']")).forEach(
-    (input, index) => {
-      if (index == newIndex) input.checked = true;
-      else input.checked = false;
-    }
-  );
-  updateConfig({
-    color_index: newIndex,
-    colors: colorSchemes,
-  });
-  initColorSchemes(newColorScheme, newIndex);
-});
-
-const workersActiveInput = document.getElementById("workers-active");
-workersActiveInput.addEventListener("change", () => {
-  workerActive = workersActiveInput.checked;
-  updateConfig({ worker_active: workerActive });
-  if (workerActive) updateWorkers();
-});
-const debugActiveInput = document.getElementById("debug-active");
-let debugActive = debugActiveInput.checked;
-debugActiveInput.addEventListener("change", () => {
-  debugActive = debugActiveInput.checked;
-  updateConfig({ debug: debugActive ? "true" : "false" });
-});
-const recordingActiveInput = document.getElementById("recording-active");
-let recordingActive = recordingActiveInput.checked;
-recordingActiveInput.addEventListener("change", () => {
-  recordingActive = recordingActiveInput.checked;
-  updateConfig({ recording: recordingActive ? "true" : "false" });
-});
-
-// Update sketch options when library changes
-function updateSketchOptions() {
-  const library = librarySelect.value;
-  sketchSelect.innerHTML = "";
-
-  sketches[library].forEach((sketch) => {
-    const option = document.createElement("option");
-    option.value = sketch;
-    option.textContent = sketch;
-    if (sketch == lastLoadedSketch) option.selected = true;
-    sketchSelect.appendChild(option);
-  });
-}
-
-// Initial population
-updateSketchOptions();
-
-// Event listeners
-librarySelect.addEventListener("change", updateSketchOptions);
-
-loadBtn.addEventListener("click", (e) => {
-  e.preventDefault();
-  const library = librarySelect.value;
-  const sketch = sketchSelect.value;
-
-  if (library === "p5") {
-    sketchLoader.loadP5Sketch(sketch);
-  } else {
-    sketchLoader.loadPaperSketch(sketch);
-  }
-
-  versionInfo.textContent = `Current: ${sketch}`;
-});
 
 // post new config to config/config.php
 async function updateConfig(args) {
@@ -299,8 +134,8 @@ let lastInteraction = performance.now();
 function changeChanValue(e, chan, value) {
   if (e) {
     const delta = e.deltaY;
-    if (delta > 0) channelInputs[chan].value++;
-    else if (delta < 0) channelInputs[chan].value--;
+    channelInputs[chan].value =
+      parseInt(channelInputs[chan].value) + parseInt(delta * 0.25);
   } else if (value || value === 0) {
     // console.log(value);
     channelInputs[chan].value = value;
@@ -347,25 +182,28 @@ setTimeout(() => {
 
 function saveCanvas(e, fileName) {
   e.preventDefault();
-  if (sketchLoader.currentLib === "p5") {
-    const canvas = sketchLoader.currentSketch.canvas;
-    const dataURL = canvas.toDataURL("image/png");
-    const link = document.createElement("a");
-    link.download = "canvas.png";
-    link.href = dataURL;
-    link.click();
-  } else if (sketchLoader.currentLib === "paper") {
-    if (!fileName) {
-      fileName = `paper-${sketchSelect.value}-${channels.join("-")}.svg`;
-    }
-
-    var url =
-      "data:image/svg+xml;utf8," +
-      encodeURIComponent(paper.project.exportSVG({ asString: true }));
-
-    var link = document.createElement("a");
-    link.download = fileName;
-    link.href = url;
-    link.click();
+  if (!fileName) {
+    fileName = `paper-${sketchSelect.value}-${channels.join("-")}.svg`;
   }
+
+  var url =
+    "data:image/svg+xml;utf8," +
+    encodeURIComponent(paper.project.exportSVG({ asString: true }));
+
+  var link = document.createElement("a");
+  link.download = fileName;
+  link.href = url;
+  link.click();
 }
+const sketchInputs = document.querySelectorAll("input[name='sketch']");
+
+// Event listeners
+
+sketchInputs.forEach((input) => {
+  input.addEventListener("change", (e) => {
+    e.preventDefault();
+    const sketch = input.value;
+    sketchLoader.loadSketch(sketch);
+  });
+  if (input.checked) sketchLoader.loadSketch(input.value);
+});

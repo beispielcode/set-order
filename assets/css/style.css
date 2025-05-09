@@ -1,3 +1,7 @@
+html {
+  overflow: hidden;
+}
+
 body {
   margin: 0;
   padding: 0;
@@ -62,7 +66,7 @@ option {
   width: 100%;
   z-index: 2;
   background-color: #fff;
-  border-left: solid 1px #000;
+  /* border-left: solid 1px #000; */
   grid-area: controls;
 }
 
@@ -119,62 +123,6 @@ button {
   padding: 0.125rem 0.25rem;
   max-width: 100%;
   border: solid 1px #666666;
-}
-
-#version-info {
-  font-size: 1rem;
-  line-height: 0.8rem;
-}
-
-.color-scheme {
-  max-width: 100%;
-  gap: 0.25rem 0;
-  display: flex;
-  flex-flow: row wrap;
-  /* display: grid; */
-  /* grid-template-columns: 1em 1fr 1fr 1fr; */
-  margin-bottom: 0.5rem;
-}
-
-.color {
-  display: grid;
-  grid-template-rows: auto auto;
-  gap: 0.25rem;
-  /* flex-basis: calc((100% - 0.5rem) / 3); */
-  flex-basis: calc(100% / 3);
-}
-
-.color input {
-  width: 100%;
-  border: none;
-  text-align: center;
-}
-
-.color-scheme input[type="radio"] {
-  height: 1.5rem;
-  width: 1.5rem;
-  align-self: center;
-}
-
-.delete-button {
-  margin-left: auto;
-  flex-basis: calc(50% - 0.125rem);
-}
-
-#add-color {
-  /* margin: auto; */
-}
-
-#navigation {
-  position: fixed;
-  top: 1rem;
-  left: 1rem;
-  width: 356px;
-  height: 356px;
-  transition: opacity 0.5s ease-in-out;
-}
-#navigation.hidden {
-  opacity: 0;
 }
 
 .canvas-wrapper {
