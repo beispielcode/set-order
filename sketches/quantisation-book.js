@@ -1,6 +1,6 @@
 // Set up the Paper.js environment
 paper.setup("paper-canvas");
-paper.view.viewSize = [canvasWidth, canvasHeight];
+paper.view.viewSize = [canvasWidth, canvasWidth];
 with (paper) {
   // Add MIDI event listener for control change messages
   window.addEventListener("midimessage", (e) => {
@@ -10,73 +10,62 @@ with (paper) {
   });
   let frameCount = 0;
 
-  const s01_colorBackground = "#e6e6e6";
-  const s01_colorGrid = "#fff";
-  const s01_colorTarget = "#fff";
-  const P3converter = culori.converter("p3");
-  const CSSFormater = culori.formatCss;
-  // const s01_colorQuantised = "#ff00b2";
-  // const s01_colorQuantised = culori.formatHex("lab(70% 100% 0)");
-  const s01_colorQuantised = new Color(
-    "color(display-p3 1.267976512366232 -0.25502970586750234 0.6899703995058147)"
-  );
-
-  var rgbColor = new Color("red");
-  var p3Version = rgbColor.convert("p3");
-  console.log(rgbColor, p3Version);
-
+  const s01_colorBackground = "#fff";
+  const s01_colorGrid = "#000";
+  const s01_colorTarget = "#000";
+  const s01_colorQuantised = "#FF1493";
   const s01_colorHull = "#0000";
-  const s01_strokeWidth = 8 * GLOBAL_SCALE;
+  const s01_strokeWidth = 4;
 
   // Create a background rectangle
-  const backgroundLayer = new Layer();
-  const background = new Path.Rectangle({
-    parent: backgroundLayer,
-    point: [0, 0],
-    size: [view.viewSize.width, view.viewSize.height],
-    // fillColor: colors[0],
-    fillColor: s01_colorBackground,
-  });
+  // const backgroundLayer = new Layer();
+  // const background = new Path.Rectangle({
+  //   parent: backgroundLayer,
+  //   point: [0, 0],
+  //   size: [view.viewSize.width, view.viewSize.height],
+  //   // fillColor: colors[0],
+  //   fillColor: s01_colorBackground,
+  // });
 
   const sceneElements = [];
 
   // Scene 01 – Cube
   const s01_gridLayer = new Layer();
-  const s01_gridSizeRange = [20 * GLOBAL_SCALE, 630 * GLOBAL_SCALE];
-  const s01_gridRowTemplate = new Path.Line({
-    parent: s01_gridLayer,
-    strokeColor: s01_colorGrid,
-    strokeWidth: 4 * GLOBAL_SCALE,
-    from: new Point(0, 0),
-    to: new Point(view.viewSize.width, 0),
-  });
-  const s01_gridColumnTemplate = new Path.Line({
-    parent: s01_gridLayer,
-    strokeColor: s01_colorGrid,
-    strokeWidth: 4 * GLOBAL_SCALE,
-    from: new Point(0, 0),
-    to: new Point(0, view.viewSize.height),
-  });
-  const s01_gridRowQuantisedTemplate = new Path.Line({
-    parent: s01_gridLayer,
-    strokeColor: s01_colorQuantised,
-    strokeWidth: 4 * GLOBAL_SCALE,
-    from: new Point(0, 0),
-    to: new Point(view.viewSize.width, 0),
-  });
-  const s01_gridColumnQuantisedTemplate = new Path.Line({
-    parent: s01_gridLayer,
-    strokeColor: s01_colorQuantised,
-    strokeWidth: 4 * GLOBAL_SCALE,
-    from: new Point(0, 0),
-    to: new Point(0, view.viewSize.height),
-  });
-  const s01_gridRowSymbol = new Symbol(s01_gridRowTemplate);
-  const s01_gridColumnSymbol = new Symbol(s01_gridColumnTemplate);
-  const s01_gridRowQuantisedSymbol = new Symbol(s01_gridRowQuantisedTemplate);
-  const s01_gridColumnQuantisedSymbol = new Symbol(
-    s01_gridColumnQuantisedTemplate
-  );
+  const s01_gridSizeRange = [70, 560];
+  // const s01_gridRowTemplate = new Path.Line({
+  //   parent: s01_gridLayer,
+  //   strokeColor: s01_colorGrid,
+  //   strokeWidth: 2,
+  //   from: new Point(0, 0),
+  //   to: new Point(view.viewSize.width, 0),
+  // });
+  // const s01_gridColumnTemplate = new Path.Line({
+  //   parent: s01_gridLayer,
+  //   strokeColor: s01_colorGrid,
+  //   strokeWidth: 2,
+  //   from: new Point(0, 0),
+  //   to: new Point(0, view.viewSize.height),
+  // });
+  // const s01_gridRowQuantisedTemplate = new Path.Line({
+  //   parent: s01_gridLayer,
+  //   strokeColor: s01_colorQuantised,
+  //   strokeWidth: 2,
+  //   from: new Point(0, 0),
+  //   to: new Point(view.viewSize.width, 0),
+  // });
+  // const s01_gridColumnQuantisedTemplate = new Path.Line({
+  //   parent: s01_gridLayer,
+  //   strokeColor: s01_colorQuantised,
+  //   strokeWidth: 2,
+  //   from: new Point(0, 0),
+  //   to: new Point(0, view.viewSize.height),
+  // });
+  // const s01_gridRowSymbol = new Symbol(s01_gridRowTemplate);
+  // const s01_gridColumnSymbol = new Symbol(s01_gridColumnTemplate);
+  // const s01_gridRowQuantisedSymbol = new Symbol(s01_gridRowQuantisedTemplate);
+  // const s01_gridColumnQuantisedSymbol = new Symbol(
+  //   s01_gridColumnQuantisedTemplate
+  // );
   const s01_maxColumns = Math.floor(view.viewSize.width / s01_gridSizeRange[0]);
   const s01_maxRows = Math.floor(view.viewSize.height / s01_gridSizeRange[0]);
   const s01_gridIntersections = {
@@ -109,32 +98,50 @@ with (paper) {
     return newPosition;
   }
 
-  const s01_columns = new Array(s01_maxColumns + 1)
-    .fill(0)
-    .map((_, index) =>
-      s01_gridColumnSymbol.place(
-        view.center.add(
+  const s01_columns = new Array(s01_maxColumns + 1).fill(0).map(
+    (_, index) =>
+      new Path.Line({
+        parent: s01_gridLayer,
+        strokeColor: s01_colorGrid,
+        strokeWidth: 2,
+        from: new Point(0, 0).add(
           new Point(
             (((index % 2 ? -1 : 1) * roundToDecimal(index, 2)) / 2) *
               s01_gridSizeRange[0],
             0
           )
-        )
-      )
-    );
-  const s01_rows = new Array(s01_maxRows + 1)
-    .fill(0)
-    .map((_, index) =>
-      s01_gridRowSymbol.place(
-        view.center.add(
+        ),
+        to: new Point(0, view.viewSize.height).add(
+          new Point(
+            (((index % 2 ? -1 : 1) * roundToDecimal(index, 2)) / 2) *
+              s01_gridSizeRange[0],
+            0
+          )
+        ),
+      })
+  );
+  const s01_rows = new Array(s01_maxRows + 1).fill(0).map(
+    (_, index) =>
+      new Path.Line({
+        parent: s01_gridLayer,
+        strokeColor: s01_colorGrid,
+        strokeWidth: 2,
+        from: new Point(0, 0).add(
           new Point(
             0,
             (((index % 2 ? -1 : 1) * roundToDecimal(index, 2)) / 2) *
               s01_gridSizeRange[0]
           )
-        )
-      )
-    );
+        ),
+        to: new Point(view.viewSize.width, 0).add(
+          new Point(
+            0,
+            (((index % 2 ? -1 : 1) * roundToDecimal(index, 2)) / 2) *
+              s01_gridSizeRange[0]
+          )
+        ),
+      })
+  );
   sceneElements.push(
     new Choreography(
       {
@@ -145,14 +152,16 @@ with (paper) {
         {
           attribute: "scale",
           axes: [0],
-          transitions: ["smooth"],
+          transitions: ["steps"],
           // controlPoints: [
           //   { position: [0, 0, 0, 0], value: s01_gridSizeRange[1] },
           //   { position: [127, 0, 0, 0], value: s01_gridSizeRange[0] },
           // ],
           controlPoints: [
-            { position: [0, 0, 0, 0], value: 1 },
-            { position: [127, 0, 0, 0], value: 0.2 },
+            { position: [0, 0, 0, 0], value: s01_gridSizeRange[1] },
+            { position: [31, 0, 0, 0], value: 280 },
+            { position: [63, 0, 0, 0], value: 140 },
+            { position: [127, 0, 0, 0], value: s01_gridSizeRange[0] },
           ],
         },
         {
@@ -175,11 +184,7 @@ with (paper) {
         },
       ],
       function () {
-        const scale = lerp(
-          s01_gridSizeRange[0],
-          s01_gridSizeRange[1],
-          this.scale ** 6
-        );
+        const scale = this.scale;
 
         const exponent = this.exponent;
         const { columns, rows } = this.element;
@@ -238,7 +243,7 @@ with (paper) {
   );
 
   const s01_drawingLayer = new Layer();
-  const s01_cubeSizeRange = [280 * GLOBAL_SCALE, 3360 * GLOBAL_SCALE];
+  const s01_cubeSizeRange = [(2240 / 2) * 0.5, (2240 / 2) * 2];
   const s01_cubeVertices = [
     [0, 0, 0],
     [1, 0, 0],
@@ -271,11 +276,11 @@ with (paper) {
     [3, 7],
   ];
 
-  const s02_cobeConvexHull = new Path(...calculateConvexHull(s01_cube));
-  // s02_cobeConvexHull.fillColor = "#000";
-  // s02_cobeConvexHull.fillColor = "#e6e6e6";
-  s02_cobeConvexHull.fillColor = s01_colorHull;
-  s02_cobeConvexHull.closed = true;
+  // const s02_cobeConvexHull = new Path(...calculateConvexHull(s01_cube));
+  // // s02_cobeConvexHull.fillColor = "#000";
+  // // s02_cobeConvexHull.fillColor = "#e6e6e6";
+  // s02_cobeConvexHull.fillColor = s01_colorHull;
+  // s02_cobeConvexHull.closed = true;
 
   const s01_cubeLines = s01_cubeConnections.map((connection) => ({
     line: new Path.Line({
@@ -320,20 +325,20 @@ with (paper) {
     from: connection[0],
     to: connection[1],
   }));
-  const s02_cubeVertecesLines = s01_cubeVertices.map((vertex) => ({
-    vertical: s01_gridColumnQuantisedSymbol.place(view.center),
-    horizontal: s01_gridRowQuantisedSymbol.place(view.center),
-  }));
+  // const s02_cubeVertecesLines = s01_cubeVertices.map((vertex) => ({
+  //   vertical: s01_gridColumnQuantisedSymbol.place(view.center),
+  //   horizontal: s01_gridRowQuantisedSymbol.place(view.center),
+  // }));
 
   sceneElements.push(
     new Choreography(
       {
-        convexHull: s02_cobeConvexHull,
+        // convexHull: s02_cobeConvexHull,
         cube: s01_cubeLines,
         cubeError: s01_cubeError,
         cubeQuantised: s01_cubeQuantised,
         vertices: s01_cube,
-        cubeVertecesLines: s02_cubeVertecesLines,
+        // cubeVertecesLines: s02_cubeVertecesLines,
       },
       [
         {
@@ -351,21 +356,32 @@ with (paper) {
           transitions: ["smooth"],
           controlPoints: [
             { position: [0, 0, 0, 0], value: 0 },
-            { position: [0, 0, 127, 0], value: Math.PI / 2 },
+            // { position: [0, 0, 15, 0], value: Math.PI / 32 },
+            // { position: [0, 0, 31, 0], value: (Math.PI / 32) * 2 },
+            // { position: [0, 0, 47, 0], value: (Math.PI / 32) * 3 },
+            // { position: [0, 0, 63, 0], value: (Math.PI / 32) * 4 },
+            // { position: [0, 0, 79, 0], value: (Math.PI / 32) * 5 },
+            // { position: [0, 0, 95, 0], value: (Math.PI / 32) * 6 },
+            // { position: [0, 0, 111, 0], value: (Math.PI / 32) * 7 },
+            { position: [0, 0, 111, 0], value: Math.PI / 2 },
+            // { position: [0, 0, 127, 0], value: (Math.PI / 32) * 8 },
           ],
         },
       ],
       function () {
         const {
-          convexHull,
+          // convexHull,
           cube,
           cubeError,
           cubeQuantised,
           vertices,
-          cubeVertecesLines,
+          // cubeVertecesLines,
         } = this.element;
         const size = this.size;
         const angle = this.rotation;
+        // radians to degrees
+        console.log((angle * 180) / Math.PI);
+
         const quantisedVertices = [];
         const renderedVertices = vertices.map((vertex, index) => {
           const vector = vertex.position.map((value) => value - 0.5);
@@ -397,9 +413,9 @@ with (paper) {
           };
         });
 
-        convexHull.segments = calculateConvexHull(
-          renderedVertices.map((v) => v.quantised)
-        );
+        // convexHull.segments = calculateConvexHull(
+        //   renderedVertices.map((v) => v.quantised)
+        // );
         cube.forEach((line, index) => {
           const from = renderedVertices[line.from];
           const to = renderedVertices[line.to];
@@ -410,14 +426,14 @@ with (paper) {
           cubeQuantised[index].line.firstSegment.point = from.quantised;
           cubeQuantised[index].line.lastSegment.point = to.quantised;
         });
-        renderedVertices.forEach((_, index) => {
-          cubeVertecesLines[index].vertical.visible = false;
-          cubeVertecesLines[index].horizontal.visible = false;
-          cubeVertecesLines[index].vertical.position.x =
-            renderedVertices[index].quantised.x;
-          cubeVertecesLines[index].horizontal.position.y =
-            renderedVertices[index].quantised.y;
-        });
+        // renderedVertices.forEach((_, index) => {
+        //   cubeVertecesLines[index].vertical.visible = false;
+        //   cubeVertecesLines[index].horizontal.visible = false;
+        //   cubeVertecesLines[index].vertical.position.x =
+        //     renderedVertices[index].quantised.x;
+        //   cubeVertecesLines[index].horizontal.position.y =
+        //     renderedVertices[index].quantised.y;
+        // });
       }
     )
   );

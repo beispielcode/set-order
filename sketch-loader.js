@@ -40,6 +40,10 @@ const sketchLoader = {
     canvas.id = "paper-canvas";
     canvas.width = canvasWidth;
     canvas.height = canvasHeight;
+    // canvas.style.minWidth = `${canvasWidth}px`;
+    // canvas.style.minHeight = `${canvasHeight}px`;
+    canvas.style.maxWidth = `${canvasWidth}px`;
+    canvas.style.maxHeight = `${canvasHeight}px`;
     canvas.setAttribute("keepalive", "true");
     canvas.setAttribute("data-keepalive", "true");
     container.appendChild(canvas);
@@ -54,6 +58,7 @@ const sketchLoader = {
     this.currentSketch = {
       scripts: this.currentSketch.scripts,
       canvas: container,
+      sketchName: sketchName,
     };
   },
 

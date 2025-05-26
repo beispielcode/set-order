@@ -51,8 +51,10 @@ $config = require_once 'config/config.php';
   <script src="	https://cdn.jsdelivr.net/npm/culori"></script>
   <script src="lib/choreography.js"></script>
   <script src="utils/interface.js" defer></script>
+  <script src="utils/animation-control.js" defer></script>
   <script src="lib/paper-full.js"></script>
   <script src="utils/paper-helpers.js"></script>
+  <script src="utils/switch-control.js"></script>
 </head>
 
 <body>
@@ -72,19 +74,19 @@ $config = require_once 'config/config.php';
       <legend>MIDI emulator</legend>
       <label class="full-width" for="chan0">chan0
         <input type="range" style="width:100%" name="chan0" value="<?= $config['chan0'] ?>" id="chan0" min="0" max="127"
-          step="1">
+          step=".1">
       </label>
       <label class="full-width" for="chan1">chan1
         <input type="range" style="width:100%" name="chan1" value="<?= $config['chan1'] ?>" id="chan1" min="0" max="127"
-          step="1">
+          step=".1">
       </label>
       <label class="full-width" for="chan2">chan2
         <input type="range" style="width:100%" name="chan2" value="<?= $config['chan2'] ?>" id="chan2" min="0" max="127"
-          step="1">
+          step=".1">
       </label>
       <label class="full-width" for="chan3">chan3
         <input type="range" style="width:100%" name="chan3" value="<?= $config['chan3'] ?>" id="chan3" min="0" max="127"
-          step="1">
+          step=".1">
       </label>
     </fieldset>
   </div>

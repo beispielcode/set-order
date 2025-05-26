@@ -4,9 +4,9 @@ return [
   'title' => 'SET ORDER',
   'description' => 'A set of visual poems on noise.',
   'author' => 'Miloš Gavrić and Noé Gogniat',
-  'last_loaded_sketch' => 'quantisation',
-  'chan0' => 127,
-  'chan1' => 127,
+  'last_loaded_sketch' => 'interpolation-gradient',
+  'chan0' => 0,
+  'chan1' => 0,
   'chan2' => 0,
-  'chan3' => 127,
+  'chan3' => 0,
 ];

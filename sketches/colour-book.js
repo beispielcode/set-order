@@ -1,6 +1,6 @@
 // Set up the Paper.js environment
 paper.setup("paper-canvas");
-paper.view.viewSize = [canvasWidth, canvasHeight];
+paper.view.viewSize = [canvasWidth, canvasWidth];
 with (paper) {
   // Add MIDI event listener for control change messages
   window.addEventListener("midimessage", (e) => {
@@ -9,16 +9,6 @@ with (paper) {
       updateAxesValue(control, value);
   });
   let frameCount = 0;
-  const s02_backgroundColor = "#e6e6e6";
-
-  // Create a background rectangle
-  const backgroundLayer = new Layer();
-  const background = new Path.Rectangle({
-    parent: backgroundLayer,
-    point: [0, 0],
-    size: [canvasWidth, canvasHeight],
-    fillColor: s02_backgroundColor,
-  });
 
   const sceneElements = [];
 
@@ -26,9 +16,10 @@ with (paper) {
   const s02_layer = new Layer();
   const s02_maxDepth = 8;
   const s02_maxColor = 2 ** s02_maxDepth;
-  const s02_center = new Point(canvasWidth / 2, canvasHeight / 2);
+  const s02_center = new Point(canvasWidth / 2, canvasWidth / 2);
   function getColor(index, channelScalers = [1, 1, 1]) {
     const [r, g, b] = channelScalers.map((scale) =>
+      // Math.floor((255 / 2 ** s02_maxDepth) * index * scale)
       Math.floor(255 - (255 / 2 ** s02_maxDepth) * index * scale)
     );
     return culori.formatHex(`rgb(${r}, ${g}, ${b})`);
@@ -39,9 +30,13 @@ with (paper) {
     const pathLength = path.length;
     const neutralHandle = new Point(0, 0);
     divisions = divisions.sort((a, b) => b - a);
+    // divisions.pop();
+    // division = divisions.filter((v) => v > 0 && v < 1);
     const clone = path.clone().splitAt(pathLength);
     let prevTo = 1;
     divisions.forEach((to, index) => {
+      // prevTo = index < divisions.length / 2 ? prevTo : divisions[index + 1];
+      // if (to && to !== 1 && prevTo - to > 0) {
       if (to && to !== 1 && prevTo - to > 1e-6) {
         let newPath = clone.splitAt(to * pathLength);
         if (newPath?.segments.length > 1) {
@@ -92,7 +87,7 @@ with (paper) {
     return result;
   }
   // const s02_circleRadius = 64;
-  const s02_circleRadius = 1024 * GLOBAL_SCALE;
+  const s02_circleRadius = 512;
   const s02_circles = new Array(s02_maxDepth).fill(0).map(
     (_, index) =>
       new Path.Circle({
@@ -100,7 +95,7 @@ with (paper) {
         // radius: s02_circleRadius * (s02_maxDepth - index),
         radius: s02_circleRadius,
         strokeColor: "#fff",
-        strokeWidth: 4 * GLOBAL_SCALE,
+        strokeWidth: 2,
         fillColor: "#e6e6e6",
         rotation: 90,
         strokeScaling: false,
@@ -229,25 +224,6 @@ with (paper) {
     }));
 
   const so02_whiteScaler = [1, 1, 1];
-  // const s02_colorScaler = [
-  //   [0, 1, 1],
-  //   // [1, 0, 1],
-  //   [1, (1 / 255) * 20, (1 / 255) * 145],
-  //   [1, 1, 0],
-  //   [1, 0, 0],
-  //   [0, 1, 0],
-  //   [0, 0, 1],
-  //   // [1, 1, 1],
-  // ];
-  // const s02_colorScaler = [
-  //   [1, 0, 0],
-  //   [1, 1, 0],
-  //   [0, 1, 0],
-  //   [0, 1, 1],
-  //   [0, 0, 1],
-  //   [1, 1, 1],
-  //   [1, (1 / 255) * 20, (1 / 255) * 145],
-  // ];
   const s02_colorScaler = [
     [0, 1, 1],
     [0, 0, 1],
@@ -287,7 +263,7 @@ with (paper) {
           attribute: "divisions",
           axes: [0, 1],
           // transitions: ["threshold", "threshold"],
-          transitions: ["smooth", "smooth"],
+          transitions: ["steps", "steps"],
           // transitions: ["threshold", "smooth"],
           // transitions: ["smooth", "threshold"],
           dynamicContants: [
@@ -301,7 +277,7 @@ with (paper) {
           attribute: "scale",
           axes: [0, 1],
           // transitions: ["threshold", "threshold"],
-          transitions: ["smooth", "smooth"],
+          transitions: ["steps", "steps"],
           // transitions: ["threshold", "smooth"],
           // transitions: ["smooth", "threshold"],
           dynamicContants: [
@@ -333,7 +309,7 @@ with (paper) {
           axes: [0, 1],
           // transitions: ["threshold", "smooth"],
           // transitions: ["threshold", "threshold"],
-          transitions: ["smooth", "smooth"],
+          transitions: ["steps", "steps"],
           // transitions: ["smooth", "threshold"],
           // transitions: ["steps", "smooth"],
           dynamicContants: [
@@ -346,7 +322,7 @@ with (paper) {
         {
           attribute: "tint",
           axes: [3],
-          transitions: ["smooth"],
+          transitions: ["steps"],
           dynamicContants: [{ f: 1.75, z: 1, r: 0.2 }],
           controlPoints: [
             { position: [0, 0, 0, 0], value: 0 },
@@ -410,7 +386,7 @@ with (paper) {
           const fillArray = color[depthIndex]
             .map((value, index) => {
               strokeArray[index] =
-                Math.min(1, map(value ** 0.5, 0, 0.5, 1, 0)) * 4 * GLOBAL_SCALE;
+                Math.min(1, map(value ** 0.5, 0, 0.5, 1, 0)) * 2;
               const offset =
                 s02_colorScaler.length * colorDisparity +
                 noise.simplex2(

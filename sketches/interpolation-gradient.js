@@ -11,7 +11,6 @@ with (paper) {
   let frameCount = 0;
   const s02_backgroundColor = "#e6e6e6";
   const s03_screenHypotenuse = Math.sqrt(canvasWidth ** 2 + canvasHeight ** 2);
-  // const s03_pink = culori.formatHex("lab(70% 100% 0)");
   const s03_pink = new Color(
     "color(display-p3 1.267976512366232 -0.25502970586750234 0.6899703995058147)"
   );
@@ -61,6 +60,18 @@ with (paper) {
     strokeWidth: s03_strokeWidth,
   });
 
+  const s03_fillColorArray = new Array(s03_curveResolution * 2)
+    .fill(0)
+    .map((_, index) =>
+      culori.formatHex({
+        mode: "hsl",
+        h: 0,
+        s: 0,
+        l: Math.min(1, index / (s03_curveResolution * 2)),
+        alpha: 1,
+      })
+    );
+
   sceneElements.push(
     new Choreography(
       {
@@ -97,9 +108,19 @@ with (paper) {
           attribute: "resolution",
           axes: [0],
           transitions: ["smooth"],
+          dynamicContants: [{ f: 1.5, z: 1, r: 0.5 }],
           controlPoints: [
-            { position: [0, 0, 0, 0], value: 2 },
-            { position: [127, 0, 0, 0], value: s03_curveResolution },
+            { position: [0, 0, 0, 0], value: 1 },
+            { position: [127, 0, 0, 0], value: s03_curveResolution - 2 },
+          ],
+        },
+        {
+          attribute: "resolutionExponent",
+          axes: [0],
+          transitions: ["smooth"],
+          controlPoints: [
+            { position: [0, 0, 0, 0], value: 0 },
+            { position: [127, 0, 0, 0], value: 1 },
           ],
         },
         {
@@ -133,7 +154,8 @@ with (paper) {
       function () {
         const { curve, drawnPath, curvePath, debug, markers, noiseZ } =
           this.element;
-        const resolution = this.resolution;
+        const resolution =
+          2 + this.resolution * this.resolutionExponent ** 1.125;
         const tension = this.tension;
         const counterTension = this.counterTension;
         const dance = this.dance;
@@ -175,6 +197,29 @@ with (paper) {
         debug[1].visible = false;
         curvePath.visible = false;
         markers.forEach((marker, index) => {
+          // const fillColor = culori.formatHex({
+          //   mode: "hsl",
+          //   h: 0,
+          //   s: 0,
+          //   l: Math.min(1, index / (resolution - 1)),
+          //   alpha: 1,
+          // });
+          const fillColor =
+            s03_fillColorArray[
+              Math.min(
+                Math.round(
+                  (index / (resolution - 1)) * s03_curveResolution * 2
+                ),
+                s03_curveResolution * 2 - 1
+              )
+            ];
+          // console.log(
+          //   Math.min(
+          //     Math.round((index / (resolution - 1)) * s03_curveResolution),
+          //     s03_curveResolution - 1
+          //   )
+          // );
+
           const curveTime = Math.min((1 / resolution) * (index + 1), 1);
           const curveAtTime = curve.getLocationAtTime(curveTime).point;
           const bottomRight = new Point(canvasWidth * curveTime, canvasHeight);
@@ -307,6 +352,8 @@ with (paper) {
           marker.segments[1].point = topLeft;
           marker.segments[2].point = topRight;
           marker.segments[3].point = bottomRight;
+          marker.fillColor = fillColor;
+          marker.strokeColor = fillColor;
           drawnPath.segments[index + 1].point = topRight;
         });
         this.element.noiseZ += map(dance, 0, 1, 0.25, 1) * 0.0025;

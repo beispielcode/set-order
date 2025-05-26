@@ -7,7 +7,7 @@ let vh = Math.max(
   window.innerHeight || 0
 );
 
-const GLOBAL_SCALE = 0.5;
+const GLOBAL_SCALE = 0.75;
 
 let canvasWidth = 4480 * GLOBAL_SCALE;
 let canvasHeight = 2520 * GLOBAL_SCALE;

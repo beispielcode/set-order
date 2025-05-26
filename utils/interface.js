@@ -35,6 +35,10 @@ function handleKeyDown(e) {
       break;
     case "s":
       if (!e.shiftKey && e.metaKey && !e.altKey) saveCanvas(e);
+      break;
+    case " ":
+      if (!e.shiftKey && !e.metaKey && !e.altKey) toggleAnimation();
+      break;
     default:
       break;
   }
@@ -48,6 +52,9 @@ function handleKeyUp(e) {
 
 // post new config to config/config.php
 async function updateConfig(args) {
+  // only update on localhost
+  if (window.location.hostname !== "localhost") return;
+
   // const url = "http://10.21.1.232:8000/index.php";
   const url = "";
   // console.log(JSON.stringify(args));
@@ -141,16 +148,20 @@ function changeChanValue(e, chan, value) {
     channelInputs[chan].value = value;
   }
 
-  channelOutputs[chan].textContent = `chan${chan}: ${channelInputs[
-    chan
-  ].value.padStart(3, 0)}/127`;
-  channels[chan] = parseInt(channelInputs[chan].value);
+  channelOutputs[chan].textContent = `chan${chan}: ${Math.round(
+    channelInputs[chan].value
+  )
+    .toString()
+    .padStart(3, 0)}/127`;
+  // channels[chan] = parseInt(channelInputs[chan].value);
+  channels[chan] = channelInputs[chan].value;
   updateConfig({ [`chan${chan}`]: parseInt(channelInputs[chan].value) });
   midiMessage({
     type: "controlchange",
     channel: 0,
     control: chan,
-    value: parseInt(channelInputs[chan].value),
+    // value: parseInt(channelInputs[chan].value),
+    value: channelInputs[chan].value,
   });
 }
 
@@ -183,7 +194,7 @@ setTimeout(() => {
 function saveCanvas(e, fileName) {
   e.preventDefault();
   if (!fileName) {
-    fileName = `paper-${sketchSelect.value}-${channels.join("-")}.svg`;
+    fileName = `paper-${activeSketch}-${channels.join("-")}.svg`;
   }
 
   var url =
@@ -198,11 +209,14 @@ function saveCanvas(e, fileName) {
 const sketchInputs = document.querySelectorAll("input[name='sketch']");
 
 // Event listeners
-
+let activeSketch = Array.from(sketchInputs).find(
+  (input) => input.checked
+).value;
 sketchInputs.forEach((input) => {
   input.addEventListener("change", (e) => {
     e.preventDefault();
     const sketch = input.value;
+    activeSketch = sketch;
     sketchLoader.loadSketch(sketch);
   });
   if (input.checked) sketchLoader.loadSketch(input.value);
