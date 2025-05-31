@@ -43,17 +43,18 @@ $config = require_once 'config/config.php';
     const sketches = ['<?= implode("', '", $sketches) ?>'];
     const lastLoadedSketch = '<?= $config['last_loaded_sketch'] ?>';
   </script>
-  <script src="sketch-loader.js"></script>
+  <!-- <script src="sketch-loader.js"></script> -->
   <script src="utils/helpers.js"></script>
-  <script src="utils/perlin.js"></script>
-  <script src="lib/webmidi.iife.js"></script>
-  <script src="lib/second-order-dynamics.js"></script>
-  <script src="	https://cdn.jsdelivr.net/npm/culori"></script>
-  <script src="lib/choreography.js"></script>
-  <script src="utils/interface.js" defer></script>
-  <script src="utils/animation-control.js" defer></script>
   <script src="lib/paper-full.js"></script>
   <script src="utils/paper-helpers.js"></script>
+  <script src="lib/culori.js"></script>
+  <script src="lib/webmidi.iife.js"></script>
+  <script src="lib/choreography.js"></script>
+  <script src="lib/second-order-dynamics.js"></script>
+  <script src="utils/perlin.js"></script>
+  <script src="utils/scene-manager.js" defer></script>
+  <script src="utils/interface.js" defer></script>
+  <script src="utils/animation-control.js" defer></script>
   <script src="utils/switch-control.js"></script>
 </head>
 
@@ -91,6 +92,9 @@ $config = require_once 'config/config.php';
     </fieldset>
   </div>
   <main>
+    <div id="paper-container">
+      <canvas id="paper-canvas" keepalive="true" data-keepalive="true"></canvas>
+    </div>
     <div id="output-wrapper">
       <output id="output-chan0">chan0: <?= str_pad($config['chan0'], 3, "0", STR_PAD_LEFT) ?>/127</output>
       <output id="output-chan1">chan1: <?= str_pad($config['chan1'], 3, "0", STR_PAD_LEFT) ?>/127</output>

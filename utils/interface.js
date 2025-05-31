@@ -13,7 +13,8 @@ function handleKeyDown(e) {
         // request full screen
         e.preventDefault();
         if (!document.fullscreenElement)
-          sketchLoader?.currentSketch?.canvas?.parentElement?.requestFullscreen();
+          sceneManager.canvas.parentElement.requestFullscreen();
+        // sketchLoader?.currentSketch?.canvas?.parentElement?.requestFullscreen();
         else document.exitFullscreen();
       }
       break;
@@ -52,6 +53,7 @@ function handleKeyUp(e) {
 
 // post new config to config/config.php
 async function updateConfig(args) {
+  return;
   // only update on localhost
   if (window.location.hostname !== "localhost") return;
 
@@ -107,33 +109,10 @@ const channelOutputs = [
 
 channelInputs.forEach((input, index) => {
   input.addEventListener("input", () => {
-    channels[index] = parseInt(input.value);
-    channelOutputs[index].textContent = `chan${index}: ${input.value.padStart(
-      3,
-      0
-    )}/127`;
-    midiMessage({
-      type: "controlchange",
-      channel: 0,
-      control: index,
-      value: parseInt(input.value),
-    });
+    changeChanValue(null, index, parseFloat(input.value));
   });
-  input.addEventListener("change", () => {
-    channels[index] = parseInt(input.value);
-    channelOutputs[index].textContent = `chan${index}: ${input.value.padStart(
-      3,
-      0
-    )}/127`;
-
-    const chan = input.id.replace("chan", "");
-    updateConfig({ [`chan${chan}`]: parseInt(input.value) });
-    midiMessage({
-      type: "controlchange",
-      channel: 0,
-      control: index,
-      value: parseInt(input.value),
-    });
+  input.addEventListener("change", (e) => {
+    changeChanValue(null, index, parseFloat(input.value));
   });
 });
 
@@ -217,7 +196,7 @@ sketchInputs.forEach((input) => {
     e.preventDefault();
     const sketch = input.value;
     activeSketch = sketch;
-    sketchLoader.loadSketch(sketch);
+    // sketchLoader.loadSketch(sketch);
   });
-  if (input.checked) sketchLoader.loadSketch(input.value);
+  // if (input.checked) sketchLoader.loadSketch(input.value);
 });

@@ -1,15 +1,66 @@
 // Set up the Paper.js environment
-// paper.setup("paper-canvas");
-// paper.view.viewSize = [canvasWidth, canvasHeight];
+paper.setup("paper-canvas");
+paper.view.viewSize = [canvasWidth, canvasHeight];
+const sceneElements = [];
 // with (paper) {
 // Add MIDI event listener for control change messages
-// window.addEventListener("midimessage", (e) => {
-//   const { type, control, value } = e.data;
-//   if (type === "controlchange" && control >= 0 && control < 4)
-//     updateAxesValue(control, value);
-// });
-// let frameCount = 0;
+window.addEventListener("midimessage", (e) => {
+  const { type, control, value } = e.data;
+  if (type === "controlchange" && control >= 0 && control < 4)
+    updateAxesValue(control, value);
+});
+let frameCount = 0;
 
+const s01_colorBackground = "#e6e6e6";
+const s01_colorGrid = "#fff";
+const s01_colorTarget = "#fff";
+// const P3converter = culori.converter("p3");
+// const CSSFormater = culori.formatCss;
+const s01_colorQuantised = new paper.Color(
+  "color(display-p3 1.267976512366232 -0.25502970586750234 0.6899703995058147)"
+);
+
+const s01_strokeWidth = 8 * GLOBAL_SCALE;
+
+// Create a background rectangle
+const backgroundLayer = new paper.Layer();
+const background = new paper.Path.Rectangle({
+  parent: backgroundLayer,
+  point: [0, 0],
+  size: [paper.view.viewSize.width, paper.view.viewSize.height],
+  // fillColor: colors[0],
+  fillColor: s01_colorBackground,
+});
+
+// Scene 01 – Cube
+const s01_gridLayer = new paper.Layer();
+const s01_gridSizeRange = [20 * GLOBAL_SCALE, 630 * GLOBAL_SCALE];
+const s01_gridRowTemplate = new paper.Path.Line({
+  parent: s01_gridLayer,
+  strokeColor: s01_colorGrid,
+  strokeWidth: 4 * GLOBAL_SCALE,
+  from: new paper.Point(0, 0),
+  to: new paper.Point(paper.view.viewSize.width, 0),
+});
+const s01_gridColumnTemplate = new paper.Path.Line({
+  parent: s01_gridLayer,
+  strokeColor: s01_colorGrid,
+  strokeWidth: 4 * GLOBAL_SCALE,
+  from: new paper.Point(0, 0),
+  to: new paper.Point(0, paper.view.viewSize.height),
+});
+const s01_gridRowSymbol = new paper.Symbol(s01_gridRowTemplate);
+const s01_gridColumnSymbol = new paper.Symbol(s01_gridColumnTemplate);
+const s01_maxColumns = Math.floor(
+  paper.view.viewSize.width / s01_gridSizeRange[0]
+);
+const s01_maxRows = Math.floor(
+  paper.view.viewSize.height / s01_gridSizeRange[0]
+);
+const s01_gridIntersections = {
+  columns: new Array(s01_maxColumns + 1).fill(0),
+  rows: new Array(s01_maxRows + 1).fill(0),
+};
 function quantisePosition(position) {
   const { x, y } = position;
   let newPosition = new paper.Point(x, y);
@@ -36,61 +87,6 @@ function quantisePosition(position) {
   return newPosition;
 }
 
-const s01_colorBackground = "#e6e6e6";
-const s01_colorGrid = "#fff";
-const s01_colorTarget = "#fff";
-const s01_colorQuantised = new paper.Color(
-  "color(display-p3 1.267976512366232 -0.25502970586750234 0.6899703995058147)"
-);
-const s01_strokeWidth = 8 * GLOBAL_SCALE;
-
-// Scene 01 – Cube
-const s01_scenGroup = new paper.Group({
-  name: "quantisation",
-});
-const s01_sceneChoreographies = [];
-
-// Create a background rectangle
-const background = new paper.Path.Rectangle({
-  name: "background",
-  parent: s01_scenGroup,
-  point: [0, 0],
-  size: [paper.view.viewSize.width, paper.view.viewSize.height],
-  fillColor: s01_colorBackground,
-});
-
-const s01_gridGroup = new paper.Group({
-  name: "grid",
-  parent: s01_scenGroup,
-});
-const s01_gridSizeRange = [20 * GLOBAL_SCALE, 630 * GLOBAL_SCALE];
-const s01_gridRowTemplate = new paper.Path.Line({
-  parent: s01_gridGroup,
-  strokeColor: s01_colorGrid,
-  strokeWidth: 4 * GLOBAL_SCALE,
-  from: new paper.Point(0, 0),
-  to: new paper.Point(paper.view.viewSize.width, 0),
-});
-const s01_gridColumnTemplate = new paper.Path.Line({
-  parent: s01_gridGroup,
-  strokeColor: s01_colorGrid,
-  strokeWidth: 4 * GLOBAL_SCALE,
-  from: new paper.Point(0, 0),
-  to: new paper.Point(0, paper.view.viewSize.height),
-});
-const s01_gridRowSymbol = new paper.Symbol(s01_gridRowTemplate);
-const s01_gridColumnSymbol = new paper.Symbol(s01_gridColumnTemplate);
-const s01_maxColumns = Math.floor(
-  paper.view.viewSize.width / s01_gridSizeRange[0]
-);
-const s01_maxRows = Math.floor(
-  paper.view.viewSize.height / s01_gridSizeRange[0]
-);
-const s01_gridIntersections = {
-  columns: new Array(s01_maxColumns + 1).fill(0),
-  rows: new Array(s01_maxRows + 1).fill(0),
-};
-
 const s01_columns = new Array(s01_maxColumns + 1)
   .fill(0)
   .map((_, index) =>
@@ -104,9 +100,6 @@ const s01_columns = new Array(s01_maxColumns + 1)
       )
     )
   );
-s01_columns.forEach(
-  (symbolInstance) => (symbolInstance.parent = s01_scenGroup)
-);
 const s01_rows = new Array(s01_maxRows + 1)
   .fill(0)
   .map((_, index) =>
@@ -120,14 +113,13 @@ const s01_rows = new Array(s01_maxRows + 1)
       )
     )
   );
-s01_rows.forEach((symbolInstance) => (symbolInstance.parent = s01_scenGroup));
-s01_sceneChoreographies.push(
+sceneElements.push(
   new Choreography(
     {
       columns: s01_columns,
       rows: s01_rows,
       gridSizeRange: s01_gridSizeRange,
-      gridGroup: s01_gridGroup,
+      gridLayer: s01_gridLayer,
       gridIntersections: s01_gridIntersections,
     },
     [
@@ -172,7 +164,7 @@ s01_sceneChoreographies.push(
         const normalisedIndex =
           (index -
             (columns.length - 1) / 2 +
-            noise.simplex2(index, FRAME_COUNT * 0.0005) * noiseAmount) /
+            noise.simplex2(index, frameCount * 0.0005) * noiseAmount) /
           exponentScale;
         const direction = Math.sign(normalisedIndex);
         let step =
@@ -181,7 +173,7 @@ s01_sceneChoreographies.push(
         if (position.x < 0 || position.x > paper.view.viewSize.width)
           column.remove();
         else {
-          this.element.gridGroup.addChild(column);
+          this.element.gridLayer.addChild(column);
           column.position = position;
           this.element.gridIntersections.columns.push(position.x);
         }
@@ -190,7 +182,7 @@ s01_sceneChoreographies.push(
         const normalisedIndex =
           (index -
             (rows.length - 1) / 2 +
-            noise.simplex2(index, FRAME_COUNT * 0.0004) * noiseAmount) /
+            noise.simplex2(index, frameCount * 0.0004) * noiseAmount) /
           exponentScale;
         const direction = Math.sign(normalisedIndex);
         let step =
@@ -199,20 +191,17 @@ s01_sceneChoreographies.push(
         if (position.y < 0 || position.y > paper.view.viewSize.height)
           row.remove();
         else {
-          this.element.gridGroup.addChild(row);
+          this.element.gridLayer.addChild(row);
           row.position = position;
           this.element.gridIntersections.rows.push(position.y);
         }
       });
-      FRAME_COUNT += 1 + Math.max(0, noiseAmount - 2);
+      frameCount += 1 + Math.max(0, noiseAmount - 2);
     }
   )
 );
 
-const s01_drawingGroup = new paper.Group({
-  parent: s01_scenGroup,
-});
-s01_drawingGroup.name = "cube";
+const s01_drawingLayer = new paper.Layer();
 const s01_cubeSizeRange = [280 * GLOBAL_SCALE, 3360 * GLOBAL_SCALE];
 const s01_cubeVertices = [
   [0, 0, 0],
@@ -248,7 +237,7 @@ const s01_cubeConnections = [
 
 const s01_cubeLines = s01_cubeConnections.map((connection) => ({
   line: new paper.Path.Line({
-    parent: s01_drawingGroup,
+    parent: s01_drawingLayer,
     strokeColor: s01_colorTarget,
     strokeWidth: s01_strokeWidth,
     strokeCap: "round",
@@ -260,7 +249,7 @@ const s01_cubeLines = s01_cubeConnections.map((connection) => ({
 }));
 const s01_cubeQuantised = s01_cubeConnections.map((connection) => ({
   line: new paper.Path.Line({
-    parent: s01_drawingGroup,
+    parent: s01_drawingLayer,
     strokeColor: s01_colorQuantised,
     strokeWidth: s01_strokeWidth,
     strokeCap: "round",
@@ -271,7 +260,7 @@ const s01_cubeQuantised = s01_cubeConnections.map((connection) => ({
   to: connection[1],
 }));
 
-s01_sceneChoreographies.push(
+sceneElements.push(
   new Choreography(
     {
       cube: s01_cubeLines,
@@ -339,46 +328,17 @@ s01_sceneChoreographies.push(
   )
 );
 
-const s01_scene = new Scene(
-  "quantisation",
-  s01_scenGroup,
-  s01_sceneChoreographies
-);
-
-sceneManager.addScene(s01_scene);
-
-// Delete variables that are no longer needed
-delete s01_colorBackground;
-delete s01_colorGrid;
-delete s01_colorTarget;
-delete s01_colorQuantised;
-delete s01_strokeWidth;
-delete s01_gridSizeRange;
-delete s01_gridRowTemplate;
-delete s01_gridColumnTemplate;
-delete s01_gridRowSymbol;
-delete s01_gridColumnSymbol;
-delete s01_maxColumns;
-delete s01_maxRows;
-delete s01_gridIntersections;
-delete s01_columns;
-delete s01_rows;
-delete s01_cubeSizeRange;
-delete s01_cubeVertices;
-delete s01_cube;
-delete s01_cubeConnections;
-delete s01_cubeLines;
-delete s01_cubeQuantised;
-
 // Define the onFrame event handler for animation and interaction
 // let lastInteractionTime = performance.now(); // Ensure this is defined
-// paper.view.onFrame = (e) => {
-//   updateAxes(e.delta);
-//   s01_sceneChoreographies.forEach((sceneElement) => {
+// paper.view.onFrame = () => {
+//   updateAxes(deltaTime);
+//   sceneElements.forEach((sceneElement) => {
 //     sceneElement.update();
 //   });
 // };
-// s01_sceneChoreographies.forEach((sceneElement) => {
+// sceneElements.forEach((sceneElement) => {
 //   sceneElement.update();
 // });
 // }
+
+export default sceneElements;

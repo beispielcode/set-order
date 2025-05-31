@@ -8,8 +8,10 @@ body {
   font-family: sans-serif;
   display: grid;
   max-width: 100lvw;
-  grid-template-columns: 1fr 30ch;
-  grid-template-areas: "canvas controls";
+  /* grid-template-columns: 1fr 30ch; */
+  /* grid-template-areas: "canvas controls"; */
+  grid-template-columns: 100%;
+  grid-template-areas: "canvas";
   background-color: #e6e6e6;
   font-family: "ABC Monument G Mono";
   /* background-color: color(display-p3 1.267976512366232 -0.25502970586750234 0.6899703995058147); */
@@ -69,6 +71,7 @@ option {
   background-color: #fff;
   /* border-left: solid 1px #000; */
   grid-area: controls;
+  display: none;
 }
 
 #output-wrapper {
@@ -134,7 +137,7 @@ button {
   max-width: 100%;
   height: auto;
   max-height: 100svh;
-  padding: 1rem;
+  padding: 0;
   /* display: flex;
   justify-content: center; */
 }
@@ -145,6 +148,7 @@ main {
 
 main:fullscreen {
   cursor: none;
+  margin: 0;
 }
 
 main:fullscreen #output-wrapper {

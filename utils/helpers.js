@@ -7,7 +7,7 @@ let vh = Math.max(
   window.innerHeight || 0
 );
 
-const GLOBAL_SCALE = 0.75;
+const GLOBAL_SCALE = 0.5;
 
 let canvasWidth = 4480 * GLOBAL_SCALE;
 let canvasHeight = 2520 * GLOBAL_SCALE;
@@ -72,6 +72,12 @@ const rgbToHex = (rgb) => {
   const b = Math.round(rgb[2]).toString(16).padStart(2, "0");
   return `#${r}${g}${b}`;
 };
+
+function easeOutCubic(t) {
+  // Prevent negative t value
+  if (t <= 0) return 0;
+  return 1 - Math.pow(1 - t, 3);
+}
 
 // Array helpers
 Array.prototype.shuffle = function () {

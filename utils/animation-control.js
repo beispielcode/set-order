@@ -35,24 +35,40 @@ const axisAnimations = {
 let animationPlaying = false;
 let animationFrame = null;
 let animationStartTime = performance.now();
+let sceneIndex = 0;
+let scenChangeInterval = null;
+
+function changeScene() {
+  setTimeout(() => {
+    sceneManager.next();
+  }, Math.random() * 10000);
+}
 
 function toggleAnimation() {
   if (animationPlaying) {
     animationPlaying = false;
+    clearInterval(scenChangeInterval);
+    scenChangeInterval = null;
     cancelAnimationFrame(animationFrame);
   } else {
     animationPlaying = true;
     animationStartTime = performance.now();
+    scenChangeInterval = setInterval(changeScene, 1000);
     animationFrame = requestAnimationFrame(animateAxis);
   }
 }
 
 function animateAxis() {
   const time = performance.now() - animationStartTime;
-  const { sketchName } = sketchLoader.currentSketch;
-  let axisAnimation = axisAnimations[sketchName] || axisAnimations.default;
-  axisAnimation.forEach((animation, index) =>
-    changeChanValue(null, index, animation(time))
-  );
+  // if (sketchLoader.currentSketch) {
+  //   const { sketchName } = sketchLoader.currentSketch;
+  // }
+  if (sceneManager?.currentScene) {
+    let axisAnimation =
+      axisAnimations[sceneManager.currentScene.name] || axisAnimations.default;
+    axisAnimation.forEach((animation, index) =>
+      changeChanValue(null, index, animation(time))
+    );
+  }
   animationFrame = requestAnimationFrame(animateAxis);
 }

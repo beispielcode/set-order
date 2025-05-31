@@ -1,0 +1,18 @@
+[Unit]
+Description=Rotary Switch USB Service
+After=basic.target local-fs.target dwc2.service
+Wants=basic.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 -u /home/ngogniat/Desktop/set-order/usb_test.py
+WorkingDirectory=/home/ngogniat/Desktop/set-order
+StandardOutput=append:/home/ngogniat/Desktop/set-order/usb_test.log
+StandardError=append:/home/ngogniat/Desktop/set-order/usb_test.log
+Restart=always
+RestartSec=10
+User=root
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=basic.target

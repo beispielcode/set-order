@@ -1,65 +1,198 @@
 window.addEventListener("keydown", (event) => {
-  if (event.key === "c") requestDevice();
+  if (event.key === "c") connectAndListen();
 });
 
-let device;
+class RotarySwitchListener {
+  constructor(device) {
+    this.device = device;
+    this.isListening = false;
+    this.lastValue = null;
+    this.debounceTimeout = null;
+    this.reconnectAttempts = 0;
+    this.maxReconnectAttempts = 5;
 
-function requestDevice() {
-  return navigator.usb
-    .requestDevice({
-      filters: [
-        {
-          vendorId: 0x0525,
-          productId: 0xa4a7,
-        },
-      ],
-    })
-    .then((selectedDevice) => {
-      device = selectedDevice;
-      console.log("Device selected:", device);
-      return device.open(); // Open the device
-    })
-    .then(() => device.selectConfiguration(2)) // Select configuration 2
-    .then(() => device.claimInterface(1)) // Claim Interface 1 (the one with bulk endpoints)
-    .then(() => {
-      console.log("Device ready to receive data.");
-      listenForData(); // Start listening for incoming data
-    })
-    .catch((error) => {
-      console.error("Error:", error);
-    });
-}
-
-function listenForData() {
-  if (!device) {
-    console.error("No device connected.");
-    return;
+    this.sketchArray = [
+      "quantisation",
+      "color-fullscreen",
+      "interpolation-gradient",
+    ];
   }
 
-  // Continuously read data from the device
-  const readLoop = () => {
-    device
-      .transferIn(1, 64) // Endpoint 1 IN, max 64 bytes
-      .then((result) => {
+  async start() {
+    if (this.isListening) return;
+
+    // Perform handshake before starting main loop
+    if (await this.performHandshake()) {
+      this.isListening = true;
+      this.readLoop();
+    } else {
+      console.error("Failed to establish handshake");
+    }
+  }
+
+  async performHandshake() {
+    console.log("Attempting handshake...");
+
+    try {
+      // Send a handshake message
+      const handshakeMessage = "HANDSHAKE\n";
+      const encoder = new TextEncoder();
+      await this.device.transferOut(1, encoder.encode(handshakeMessage));
+
+      // Wait for response with timeout
+      const response = await this.waitForResponse(5000); // 5 second timeout
+
+      if (response && response.includes("READY")) {
+        console.log("Handshake successful:", response);
+        return true;
+      } else if (response && response.includes("HEARTBEAT")) {
+        console.log("Heartbeat received:", response);
+        return true;
+      } else {
+        console.warn("Unexpected handshake response:", response);
+        return false;
+      }
+    } catch (error) {
+      console.error("Handshake failed:", error);
+      return false;
+    }
+  }
+
+  async waitForResponse(timeout = 5000) {
+    const startTime = Date.now();
+
+    while (Date.now() - startTime < timeout) {
+      try {
+        const result = await this.device.transferIn(1, 64);
         const decoder = new TextDecoder();
-        const receivedData = decoder.decode(result.data);
-        console.log("Data received:", receivedData);
+        const response = decoder.decode(result.data).trim();
 
-        // Process the received data (e.g., extract the keystroke)
-        if ([1, 2, 3].includes(receivedData)) {
-          const keystroke = receivedData.split(":")[1].trim();
-          console.log("Keystroke detected:", keystroke);
+        if (response) {
+          return response;
+        }
+      } catch (error) {
+        // Ignore timeout errors during handshake
+        if (error.name !== "NetworkError") {
+          throw error;
+        }
+      }
 
-          // You can add custom logic here to handle the keystroke
+      await this.sleep(100); // Small delay between attempts
+    }
+
+    throw new Error("Handshake timeout");
+  }
+
+  stop() {
+    this.isListening = false;
+    if (this.debounceTimeout) {
+      clearTimeout(this.debounceTimeout);
+    }
+  }
+
+  async readLoop() {
+    while (this.isListening) {
+      try {
+        const result = await this.device.transferIn(1, 64);
+        const decoder = new TextDecoder();
+        const receivedData = decoder.decode(result.data).trim();
+
+        if (receivedData) {
+          console.log("Data received:", receivedData);
+          this.handleData(receivedData);
+          this.reconnectAttempts = 0; // Reset on successful read
         }
 
-        // Continue reading data
-        readLoop();
-      })
-      .catch((error) => {
+        // Small delay to prevent overwhelming the CPU
+        await this.sleep(10);
+      } catch (error) {
         console.error("Error reading data:", error);
-      });
-  };
 
-  readLoop();
+        // Attempt to recover from errors
+        if (await this.handleError(error)) {
+          continue; // Try again
+        } else {
+          break; // Stop listening
+        }
+      }
+    }
+  }
+
+  handleData(data) {
+    const value = parseInt(data);
+
+    // Validate the received value
+    if (![1, 2, 3].includes(value)) {
+      console.warn("Invalid value received:", data);
+      return;
+    }
+
+    // Debounce rapid changes
+    if (this.lastValue === value) {
+      return; // Ignore duplicate values
+    }
+
+    // Clear any pending debounce
+    if (this.debounceTimeout) {
+      clearTimeout(this.debounceTimeout);
+    }
+
+    // Debounce the switch change
+    this.debounceTimeout = setTimeout(() => {
+      this.lastValue = value;
+      console.log("Message detected:", value);
+      console.log("Switching to sketch:", this.sketchArray[value - 1]);
+
+      // Load the new sketch
+      sketchLoader.loadSketch(this.sketchArray[value - 1]);
+    }, 50); // 50ms debounce
+  }
+
+  async handleError(error) {
+    // Check if it's a recoverable error
+    if (error.name === "NetworkError" || error.name === "NotFoundError") {
+      this.reconnectAttempts++;
+
+      if (this.reconnectAttempts <= this.maxReconnectAttempts) {
+        console.log(
+          `Attempting to recover... (${this.reconnectAttempts}/${this.maxReconnectAttempts})`
+        );
+        await this.sleep(1000 * this.reconnectAttempts); // Exponential backoff
+        return true; // Continue trying
+      }
+    }
+
+    console.error("Unrecoverable error, stopping listener");
+    this.isListening = false;
+    return false;
+  }
+
+  sleep(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+}
+
+async function connectAndListen() {
+  try {
+    // Request device
+    const device = await navigator.usb.requestDevice({
+      filters: [{ vendorId: 0x0525, productId: 0xa4a7 }],
+    });
+
+    await device.open();
+
+    if (device.configuration === null) {
+      await device.selectConfiguration(2);
+    }
+
+    await device.claimInterface(1);
+
+    // Start listener with handshake
+    const listener = new RotarySwitchListener(device);
+    await listener.start();
+
+    window.rotaryListener = listener;
+  } catch (error) {
+    console.error("Connection failed:", error);
+  }
 }

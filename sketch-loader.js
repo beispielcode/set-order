@@ -25,19 +25,20 @@ const sketchLoader = {
   // Load a Paper.js sketch
   loadSketch: function (sketchName) {
     updateConfig({ last_loaded_sketch: sketchName });
-    changeChanValue(null, 0, 0);
-    changeChanValue(null, 1, 0);
-    changeChanValue(null, 2, 0);
-    changeChanValue(null, 3, 0);
+    // changeChanValue(null, 0, 0);
+    // changeChanValue(null, 1, 0);
+    // changeChanValue(null, 2, 0);
+    // changeChanValue(null, 3, 0);
     this.unloadCurrent();
 
     // Create canvas
-    const container = document.createElement("div");
-    container.id = "paper-container";
-    container.classList.add("canvas-wrapper");
-    document.body.querySelector("main").appendChild(container);
-    const canvas = document.createElement("canvas");
-    canvas.id = "paper-canvas";
+    // const container = document.createElement("div");
+    // container.id = "paper-container";
+    // container.classList.add("canvas-wrapper");
+    // document.body.querySelector("main").appendChild(container);
+    // const canvas = document.createElement("canvas");
+    // canvas.id = "paper-canvas";
+    canvas = document.getElementById("paper-canvas");
     canvas.width = canvasWidth;
     canvas.height = canvasHeight;
     // canvas.style.minWidth = `${canvasWidth}px`;
@@ -46,7 +47,7 @@ const sketchLoader = {
     canvas.style.maxHeight = `${canvasHeight}px`;
     canvas.setAttribute("keepalive", "true");
     canvas.setAttribute("data-keepalive", "true");
-    container.appendChild(canvas);
+    // container.appendChild(canvas);
 
     // Create script elements
     // const libScript = this.addScript("lib/paper-full.js");
@@ -57,7 +58,7 @@ const sketchLoader = {
 
     this.currentSketch = {
       scripts: this.currentSketch.scripts,
-      canvas: container,
+      canvas: canvas.parentNode,
       sketchName: sketchName,
     };
   },
