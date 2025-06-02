@@ -1,53 +1,101 @@
+/**
+ * Orchestrates scenes and transitions between them
+ */
+
+// === GLOBAL CONSTANTS ===
+// Global scale for canvas size
+const GLOBAL_SCALE = 0.5;
+// Canvas size
+let CANVAS_WIDTH = 4480 * GLOBAL_SCALE;
+let CANVAS_HEIGHT = 2520 * GLOBAL_SCALE;
+
+// === SCENES ===
+// Check if browser is Google Chrome
+const isChrome = /Chrome/.test(navigator.userAgent);
+// Check for mobile device
+const isMobile =
+  /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+    navigator.userAgent
+  );
+
+function init() {
+  if (!isChrome) logger.log("use chrome for best performance", "");
+  if (isMobile) {
+    logger.log(
+      "please open on desktop",
+      "",
+      new Promise((resolve) => (window.onbeforeunload = resolve))
+    );
+  } else {
+    // Load scenes
+    SCENES.forEach((scene) => {
+      const script = document.createElement("script");
+      script.src = `scenes/${scene}.js`;
+      document.body.appendChild(script);
+    });
+  }
+}
+
+window.onload = init;
+
+// === SCENE MANAGER ===
 class SceneManager {
   /**
    * Constructor for the SceneManager class.
-   * @param {HTMLCanvasElement} canvas
+   * @param {string} canvasId - ID of the canvas element
    * @returns {SceneManager}
    */
-  constructor(canvas) {
-    this.canvas = canvas;
+  constructor(canvasId) {
     this.sceneIndex = 0;
     this.scenesNames = [];
     this.scenes = new Map();
     this.currentScene = null;
+    this.paused = false;
     this.isTransitioning = false;
     this.transitionDuration = 150; //ms
 
     // Initialise paper.js
-    paper.setup(canvas);
-    paper.view.viewSize = [canvasWidth, canvasHeight];
+    this.canvas = document.getElementById(canvasId);
+    paper.setup(this.canvas);
+    paper.view.viewSize = [CANVAS_WIDTH, CANVAS_HEIGHT];
 
     return this;
   }
 
   /**
    * Adds a scene to the scene manager.
-   * @param {Scene} scene
+   * @param {Scene} scene - The scene object
    * @returns {Scene}
    */
   addScene(scene) {
     const { name, sceneGroup } = scene;
+    sceneGroup.visible = false; // Hide scene group
 
-    sceneGroup.visible = false;
-
+    // Add scene to scenes map
     this.scenes.set(name, {
+      name,
       scene,
       group: sceneGroup,
       isLoaded: true,
     });
     this.scenesNames.push(name);
+
+    // Switch to the new scene if it's the first one
     if (this.currentScene === null) this.switchToScene(name);
+
     return scene;
   }
 
   /**
    * Updates the scenes.
-   * @param {number} deltaTime
+   * @param {number} deltaTime - Delta time for the animation
    */
   update(deltaTime = 0.016) {
+    if (this.paused) return;
     updateAxes(deltaTime);
     if (this.isTransitioning) return;
-    this.scenes.forEach(({ scene }) => scene.update());
+    // Propagate the update to the scenes
+    this.scenes.forEach(({ scene }) => scene.update(deltaTime));
   }
 
   /**
@@ -69,7 +117,7 @@ class SceneManager {
 
   /**
    * Switches to a new scene.
-   * @param {string} sceneName
+   * @param {string} sceneName - Name of the scene to switch to
    * @returns {Promise<Scene>}
    */
   async switchToScene(sceneName) {
@@ -78,19 +126,14 @@ class SceneManager {
 
     if (this.currentScene) this.currentScene.scene.pause();
 
-    if (!this.isTransitioning) {
-      this.isTransitioning = true;
+    // Change target scene
+    if (this.isTransitioning) {
       this.targetScene = newScene;
-      console.log("Switching to: ", this.targetScene.group.name);
-      this.currentScene = await this.performTransition(
-        this.currentScene,
-        newScene
-      );
-    } else {
-      this.targetScene = newScene;
-      console.log("Changing target to: ", this.targetScene.group.name);
       return;
     }
+    this.isTransitioning = true;
+    this.targetScene = newScene;
+    this.currentScene = await this.performTransition();
     this.isTransitioning = false;
     this.currentScene.scene.resume();
     return this.currentScene;
@@ -110,23 +153,30 @@ class SceneManager {
       }, this.transitionDuration);
     });
   }
+
+  /**
+   * Pauses the scene manager.
+   */
+  pause() {
+    this.paused = true;
+    this.isTransitioning = false;
+    this.scenes.forEach(({ scene }) => scene.pause());
+  }
+
+  /**
+   * Resumes the scene manager.
+   */
+  resume() {
+    this.paused = false;
+    this.scenes.forEach(({ scene }) => scene.resume());
+  }
 }
 
-const canvas = document.getElementById("paper-canvas");
-const sceneManager = new SceneManager(canvas);
+// Create a new scene manager
+const sceneManager = new SceneManager("paper-canvas");
+if (isMobile) sceneManager.pause();
 
-sketches.reverse().forEach((sketch) => {
-  if (
-    sketch != "quantisation" &&
-    sketch != "interpolation-gradient" &&
-    sketch != "color-fullscreen"
-  )
-    return;
-  const script = document.createElement("script");
-  script.src = `sketches/${sketch}.js`;
-  document.body.appendChild(script);
-});
-
+// === INTERACTION ===
 // Add MIDI event listener for control change messages
 window.addEventListener("midimessage", (e) => {
   const { type, control, value } = e.data;
@@ -134,16 +184,9 @@ window.addEventListener("midimessage", (e) => {
     updateAxesValue(control, value);
 });
 
-let FRAME_COUNT = 0;
-
+// === ANIMATION ===
 // Define the onFrame event handler for animation and interaction
 paper.view.onFrame = (e) => {
   const deltaTime = e.delta;
   sceneManager.update(deltaTime);
-  // updateAxes(deltaTime);
-  // sceneElements.forEach((sceneElement) => {
-  //   sceneElement.update();
-  // });
-  FRAME_COUNT++;
 };
-sceneManager.update();

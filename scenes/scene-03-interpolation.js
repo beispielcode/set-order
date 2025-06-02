@@ -1,38 +1,41 @@
-// Set up the Paper.js environment
-// paper.setup("paper-canvas");
-// paper.view.viewSize = [canvasWidth, canvasHeight];
-// with (paper) {
-// Add MIDI event listener for control change messages
-// window.addEventListener("midimessage", (e) => {
-//   const { type, control, value } = e.data;
-//   if (type === "controlchange" && control >= 0 && control < 4)
-//     updateAxesValue(control, value);
-// });
-// let frameCount = 0;
+/**
+ * Scene 03 – Interpolation
+ * Interpolation of a bezier curve with varying resolution and noise
+ */
+
+// === SCENE CONSTANTS ===
+// Colour scheme for the scene
 const s03_backgroundColor = "#e6e6e6";
 const s03_pink = new paper.Color(
   "color(display-p3 1.267976512366232 -0.25502970586750234 0.6899703995058147)"
 );
+
 const s03_strokeWidth = 8 * GLOBAL_SCALE;
+
+// Precalculated constant for efficiency
 const PI = Math.PI;
-const ONE_THIRD = 1 / 3;
-const ONE_TWELFTH = 1 / 12;
 const CANVAS_HYPOTENUSE = Math.sqrt(
   paper.view.viewSize.width ** 2 + paper.view.viewSize.height ** 2
 );
 const ONE_OVER_CANVAS_HYPOTENUSE = 1 / CANVAS_HYPOTENUSE;
 const ONE_OVER_CANVAS_WIDTH = 1 / paper.view.viewSize.width;
 const ONE_OVER_CANVAS_HEIGHT = 1 / paper.view.viewSize.height;
+// Limits divisions
+const ONE_THIRD = 1 / 3;
+const ONE_TWELFTH = 1 / 12;
 const DEG_TO_RAD = Math.PI / 180;
 const NOISE_SCALE = 0.0025;
 
-// Scene 03 – Interpolation
+// Resolution of the curve (number of segments)
+const CURVE_RESOLUTION = 128;
 
+// === SCENE SETUP ===
+// Main scene group container
 const s03_scenGroup = new paper.Group();
 s03_scenGroup.name = "interpolation";
 const s03_sceneChoreographies = [];
 
-// Create a background rectangle
+// === BACKGROUND ===
 const s03_background = new paper.Path.Rectangle({
   name: "background",
   parent: s03_scenGroup,
@@ -41,13 +44,16 @@ const s03_background = new paper.Path.Rectangle({
   fillColor: s03_backgroundColor,
 });
 
-const CURVE_RESOLUTION = 128;
+// === CURVE SETUP ===
+// Define the control points for the curve
 const s03_curvePoints = [
-  new paper.Point(0, paper.view.viewSize.height),
-  new paper.Point(0, 0),
-  new paper.Point(0, 0),
-  new paper.Point(paper.view.viewSize.width, 0),
+  new paper.Point(0, paper.view.viewSize.height), // Start point
+  new paper.Point(0, 0), // Handle 1
+  new paper.Point(0, 0), // Handle 2
+  new paper.Point(paper.view.viewSize.width, 0), // End point
 ];
+
+// Create markers along the curve
 const s03_curveMarkers = new Array(CURVE_RESOLUTION).fill(0).map(
   (_, index) =>
     new paper.Path.Rectangle({
@@ -64,7 +70,11 @@ const s03_curveMarkers = new Array(CURVE_RESOLUTION).fill(0).map(
       strokeJoin: "round",
     })
 );
+
+// Create the curve using the control points
 const s03_curve = new paper.Curve(...s03_curvePoints);
+
+// Create a path to visually represent the curve
 const s03_curvePath = new paper.Path({
   segments: [s03_curve.segment1, s03_curve.segment2],
   parent: s03_scenGroup,
@@ -72,6 +82,7 @@ const s03_curvePath = new paper.Path({
   strokeWidth: s03_strokeWidth,
 });
 
+// Precalculate colours for the markers
 const s03_fillColorArray = new Array(CURVE_RESOLUTION * 2)
   .fill(0)
   .map((_, index) =>
@@ -84,6 +95,8 @@ const s03_fillColorArray = new Array(CURVE_RESOLUTION * 2)
     })
   );
 
+// === CURVE CHOREOGRAPHY ===
+// Animation controller for the curve and markers
 s03_sceneChoreographies.push(
   new Choreography(
     {
@@ -101,12 +114,12 @@ s03_sceneChoreographies.push(
         strokeJoin: "round",
       }),
       curvePath: s03_curvePath,
-      // Reversed markers in order to facilitate index calculation
-      markers: s03_curveMarkers.reverse(),
+      markers: s03_curveMarkers.reverse(), // (reversed for easier indexing)
       noiseZ: 0,
       fillColorArray: s03_fillColorArray,
     },
     [
+      // Resolution animation (controlled by axis 0)
       {
         attribute: "resolution",
         axes: [0],
@@ -117,6 +130,7 @@ s03_sceneChoreographies.push(
           { position: [127, 0, 0, 0], value: CURVE_RESOLUTION - 2 },
         ],
       },
+      // Exponential scaling of resolution (controlled by axis 0)
       {
         attribute: "resolutionExponent",
         axes: [0],
@@ -126,6 +140,7 @@ s03_sceneChoreographies.push(
           { position: [127, 0, 0, 0], value: 1 },
         ],
       },
+      // Tension animation (controlled by axis 1)
       {
         attribute: "tension",
         axes: [1],
@@ -135,6 +150,7 @@ s03_sceneChoreographies.push(
           { position: [0, 127, 0, 0], value: 1 },
         ],
       },
+      // Counter tension animation (controlled by axis 2)
       {
         attribute: "counterTension",
         axes: [2],
@@ -144,6 +160,7 @@ s03_sceneChoreographies.push(
           { position: [0, 0, 127, 0], value: 1 },
         ],
       },
+      // Dance animation (controlled by axis 3)
       {
         attribute: "dance",
         axes: [3],
@@ -154,12 +171,15 @@ s03_sceneChoreographies.push(
         ],
       },
     ],
-    function () {
+    /**
+     * Animation render function
+     * @param {number} deltaTime - Delta time for the animation
+     */
+    function (deltaTime = 0.016) {
       const { curve, drawnPath, curvePath, markers, noiseZ, fillColorArray } =
         this.element;
-      // Exponentially increase the resolution
-      // -> Linear increments were too overwhelming at lower resolutions
-      // const resolutionExponent = Math.max(0, this.resolutionExponent) ** 1.125;
+      // Exponentially increase the resolution for smoother transitions
+      // Smaller increments at lower resolutions
       const resolutionExponent = this.resolutionExponent ** 1.125;
       const resolution = 2 + this.resolution * resolutionExponent;
       const tension = this.tension;
@@ -167,6 +187,7 @@ s03_sceneChoreographies.push(
       const dance = this.dance;
       const { width, height } = paper.view.viewSize;
 
+      // Calculate curve handles based on tension and counter-tension
       // This serves its purpose.
       const handle1X =
         width *
@@ -180,20 +201,26 @@ s03_sceneChoreographies.push(
         -height * (1 - counterTension) * (1 + 2 * tension) * ONE_THIRD;
       const handle2Y =
         height * (1 - tension) * (1 - counterTension ** 3) * ONE_THIRD;
+
+      // Update curve handles
       curve.handle1.set([handle1X, handle1Y]);
       curve.handle2.set([handle2X, handle2Y]);
       curvePath.segments[0][2] = curve.handle1;
       curvePath.segments[1][1] = curve.handle2;
       curvePath.visible = false;
 
+      // Precompute reusable values for efficiency
       const oneOverResolutionMinusOne = 1 / (resolution - 1);
       const oneOverResolution = 1 / resolution;
 
+      // Reusable points for marker updates
       const reusableBottomRight = new paper.Point(0, 0);
       const reusableTopLeft = new paper.Point(0, 0);
       const reusableTopRight = new paper.Point(0, 0);
 
+      // Update each marker along the curve
       markers.forEach((marker, index) => {
+        // Determine fill colour based on marker index
         const fillColor =
           fillColorArray[
             Math.min(
@@ -204,24 +231,27 @@ s03_sceneChoreographies.push(
             )
           ];
 
+        // Calculate curve time based on marker index
         const curveTime = Math.min(oneOverResolution * (index + 1), 1);
         reusableBottomRight.set([width * curveTime, height]);
 
-        // Only compute getLocationAtTime() if curveTime is within bounds
+        // Update marker position based on curve location
         if (curveTime >= 1 - 1e-6) {
           reusableTopRight.set([width, 0]);
           reusableTopLeft.set([0, 0]);
-          marker.visible = false;
+          marker.visible = false; // Hide marker out of bounds
         } else {
           const curveAtTime = curve.getLocationAtTime(curveTime).point;
           reusableTopLeft.set([0, curveAtTime.y]);
           reusableTopRight.set([curveAtTime.x, curveAtTime.y - height]);
         }
 
-        // Only compute angles if curveTime is within bounds
+        // Introduce noise-based rotation around curve start
         if (curveTime < 1 - 1e-6) {
           const vectorLength = reusableTopRight.length;
           const angle = reusableTopRight.angle;
+
+          // Define maximum angle angle based on vector length
           let maxAngle =
             -Math.asin(
               cap(
@@ -232,6 +262,8 @@ s03_sceneChoreographies.push(
               )
             ) *
             (180 / PI);
+
+          // Define minimum angle angle based on vector length
           let minAngle =
             -Math.asin(
               cap(
@@ -244,6 +276,7 @@ s03_sceneChoreographies.push(
             ) *
             (180 / PI);
 
+          // Rotate the marker based on the angle
           reusableTopRight.angle = lerp(
             angle,
             (noise.simplex3(resolution * 0.001, index * 0.25, noiseZ) *
@@ -256,27 +289,37 @@ s03_sceneChoreographies.push(
           );
           reusableTopRight.y += height;
         }
+
+        // Update marker geometry
         marker.segments[1].point = reusableTopLeft;
         marker.segments[2].point = reusableTopRight;
         marker.segments[3].point = reusableBottomRight;
         marker.fillColor = fillColor;
         marker.strokeColor = fillColor;
         marker.visible = true;
+
+        // Update the drawn path with the marker position
         drawnPath.segments[index + 1].point = reusableTopRight;
       });
-      this.element.noiseZ += map(dance, 0, 1, 0.25, 1) * 0.0025;
+
+      // Increment noise offset for animation
+      this.element.noiseZ +=
+        map(dance, 0, 1, 0.25, 1) * 0.0025 * deltaTime * 120;
     }
   )
 );
 
+// === SCENE REGISTRATION ===
+// Create and register the scene with the scene manager
 const s03_scene = new Scene(
-  "interpolation",
+  "scene-03-interpolation",
   s03_scenGroup,
   s03_sceneChoreographies
 );
 sceneManager.addScene(s03_scene);
 
-// Delete variables that are no longer needed
+// === CLEANUP ===
+// Delete variables that are no longer needed to free memory
 delete s03_backgroundColor;
 delete CANVAS_HYPOTENUSE;
 delete s03_pink;
@@ -286,16 +329,3 @@ delete s03_curveMarkers;
 delete s03_curve;
 delete s03_curvePath;
 delete s03_fillColorArray;
-
-// Define the onFrame event handler for animation and interaction
-// let lastInteractionTime = performance.now(); // Ensure this is defined
-// view.onFrame = () => {
-//   updateAxes(deltaTime);
-//   s03_sceneChoreographies.forEach((sceneElement) => {
-//     sceneElement.update();
-//   });
-// };
-// s03_sceneChoreographies.forEach((sceneElement) => {
-//   sceneElement.update();
-// });
-// }

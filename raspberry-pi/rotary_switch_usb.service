@@ -1,0 +1,33 @@
+# Service to run the rotary switch USB script on boot
+# 
+# === TO INSTALL ===
+# In the terminal, navigate to the directory containing the script
+# `sudo nano /etc/systemd/system/rotary_switch_usb.service`
+# Copy and paste the contents of this file
+# Save and exit (^O, Enter, ^X)
+# 
+# Reload the systemd daemon
+# `systemctl daemon-reload`
+# Enable the service to start on boot
+# `systemctl enable rotary_switch_usb.service`
+# `systemctl start rotary_switch_usb.service`
+# `reboot`
+
+[Unit]
+Description=Rotary Switch USB Service
+After=basic.target local-fs.target dwc2.service
+Wants=basic.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 -u /home/ngogniat/Desktop/set-order/rotary_switch_usb.py
+WorkingDirectory=/home/ngogniat/Desktop/set-order
+StandardOutput=append:/home/ngogniat/Desktop/set-order/rotary_switch_usb.log
+StandardError=append:/home/ngogniat/Desktop/set-order/rotary_switch_usb.log
+Restart=always
+RestartSec=10
+User=root
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=basic.target

@@ -1,16 +1,15 @@
-// Set up the Paper.js environment
-// paper.setup("paper-canvas");
-// paper.view.viewSize = [canvasWidth, canvasHeight];
-// with (paper) {
-// Add MIDI event listener for control change messages
-// window.addEventListener("midimessage", (e) => {
-//   const { type, control, value } = e.data;
-//   if (type === "controlchange" && control >= 0 && control < 4)
-//     updateAxesValue(control, value);
-// });
-// let frameCount = 0;
-const s02_backgroundColor = "#e6e6e6";
+/**
+ * Scene 02 – Colour
+ * Wheel of colours with depth and colour variation
+ */
 
+// === HELPER FUNCTIONS ===
+/**
+ * Gets colour from index and channel scalers
+ * @param {number} index - Index of the colour
+ * @param {number[]} channelScalers - Array of channel scalers
+ * @returns {string} Colour in hex format
+ */
 function getColor(index, channelScalers = [1, 1, 1]) {
   const [r, g, b] = channelScalers.map((scale) =>
     Math.floor(255 - (255 / 2 ** s02_maxDepth) * index * scale)
@@ -18,13 +17,26 @@ function getColor(index, channelScalers = [1, 1, 1]) {
   return culori.formatHex(`rgb(${r}, ${g}, ${b})`);
 }
 
+/**
+ * Divides a circle into multiple paths
+ * @param {paper.Path} path - Path to divide
+ * @param {number[]} divisions - Array of divisions
+ * @param {paper.Point} center - Center of the divisions
+ * @param {Array} fillArray - Array of fill colours
+ * @returns {paper.Path[]} Array of paths
+ */
 function divideCircle(path, divisions, center, fillArray) {
   const result = [];
   const pathLength = path.length;
-  // const neutralHandle = new Point(0, 0);
+
+  // Sort divisions in descending order
   divisions = divisions.sort((a, b) => b - a);
+
+  // Clone the path and split it into segments
   const clone = path.clone().splitAt(pathLength);
   let prevTo = 1;
+
+  // Iterate through divisions to create new paths
   divisions.forEach((to, index) => {
     if (to && to !== 1 && prevTo - to > 1e-6) {
       let newPath = clone.splitAt(to * pathLength);
@@ -57,6 +69,8 @@ function divideCircle(path, divisions, center, fillArray) {
       prevTo = to;
     }
   });
+
+  // Add the remaining path
   if (fillArray && fillArray[fillArray.length - 1]) {
     clone.fillColor = fillArray[fillArray.length - 1];
     clone.strokeWidth = 0;
@@ -64,6 +78,8 @@ function divideCircle(path, divisions, center, fillArray) {
   clone.pathIndex = divisions.length - 1;
   clone.thickness = 0;
   result.push(clone);
+
+  // Finalise paths
   result.forEach((path) => {
     path.applyMatrix = false;
     path.firstSegment.handleIn.set([0, 0]);
@@ -75,12 +91,29 @@ function divideCircle(path, divisions, center, fillArray) {
   return result;
 }
 
-// Scene 02 – Colour
+// === SCENE CONSTANTS ===
+// Colour scheme for the scene
+const s02_backgroundColor = "#e6e6e6";
+const s02_strokeColor = "#fff";
+
+// Stroke width
+const s02_circleStrokeWidth = 4 * GLOBAL_SCALE;
+
+// Depth and colour range for animation
+const s02_maxDepth = 8;
+const s02_maxColor = 2 ** s02_maxDepth;
+const s02_center = paper.view.center;
+
+// Base circle radius for animation
+const s02_circleRadius = 1024 * GLOBAL_SCALE;
+
+// === SCENE SETUP ===
+// Main scene group container
 const s02_sceneGroup = new paper.Group();
 s02_sceneGroup.name = "color";
 const s02_sceneChoreographies = [];
 
-// Create a background rectangle
+// === BACKGROUND ===
 const s02_background = new paper.Path.Rectangle({
   name: "background",
   parent: s02_sceneGroup,
@@ -89,11 +122,8 @@ const s02_background = new paper.Path.Rectangle({
   fillColor: s02_backgroundColor,
 });
 
-const s02_maxDepth = 8;
-const s02_maxColor = 2 ** s02_maxDepth;
-const s02_center = paper.view.center;
-
-const s02_circleRadius = 1024 * GLOBAL_SCALE;
+// === CIRCLES ===
+// Create an array of circles for each depth level
 const s02_circles = new Array(s02_maxDepth).fill(0).map(
   (_) =>
     new paper.Path.Circle({
@@ -101,9 +131,9 @@ const s02_circles = new Array(s02_maxDepth).fill(0).map(
       parent: s02_sceneGroup,
       center: s02_center,
       radius: s02_circleRadius,
-      strokeColor: "#fff",
-      strokeWidth: 4 * GLOBAL_SCALE,
-      fillColor: "#e6e6e6",
+      strokeColor: s02_strokeColor,
+      strokeWidth: s02_circleStrokeWidth,
+      fillColor: s02_backgroundColor,
       rotation: 90,
       strokeScaling: false,
       applyMatrix: false,
@@ -111,18 +141,21 @@ const s02_circles = new Array(s02_maxDepth).fill(0).map(
     })
 );
 
-// Build the control points at each depth
+// === CONTROL POINTS ===
+// Arrays to store control points for various attributes
 const s02_circleScaleControlPoints = [];
 const s02_circleDivisionControlPoints = [];
 const s02_circleRotationControlPoints = [];
 const s02_circleColorControlPoints = [];
+
+// Generate control points for each depth level
 for (let depth = 0; depth < s02_maxDepth; depth++) {
   let scaleArray = new Array(s02_maxDepth).fill(1);
   let divisionArray = new Array(s02_maxDepth).fill(0);
   let colorArray = new Array(s02_maxDepth).fill(0);
-  // let divisionPositionArray = new Array(2 ** s02_maxDepth).fill(0);
+
+  // Scale control points (controlled by axis 0)
   for (let amount = 0; amount < s02_maxDepth; amount++) {
-    // Scale
     scaleArray = scaleArray.map((value, index) => {
       if (index < amount - 1) return (1 / (amount + 0)) * (1 + index);
       return value;
@@ -138,7 +171,7 @@ for (let depth = 0; depth < s02_maxDepth; depth++) {
       value: scaleArray,
     });
 
-    // Division
+    // Division control points (controlled by axis 0 and axis 1)
     divisionArray = divisionArray
       .map((_, index) => {
         const divisionAmount =
@@ -173,7 +206,7 @@ for (let depth = 0; depth < s02_maxDepth; depth++) {
       value: divisionArray,
     });
 
-    // Color
+    // Colour control points (controlled by axis 0 and axis 1)
     colorArray = colorArray.map((_) => {
       const divisionAmount =
         (!depth && !amount) || depth > amount
@@ -203,7 +236,9 @@ for (let depth = 0; depth < s02_maxDepth; depth++) {
     });
   }
 }
-let s02_circlesDivided = s02_circles.map(
+
+// Divide circles into segments based on control points
+const s02_circlesDivided = s02_circles.map(
   (circle, index) =>
     new paper.Group({
       name: "circle-division",
@@ -217,6 +252,7 @@ let s02_circlesDivided = s02_circles.map(
     })
 );
 
+// Rotation control points (controlled by axis 1)
 const s02_rotationControlPoints = new Array(s02_maxDepth)
   .fill(0)
   .map((_, depth) => ({
@@ -226,18 +262,19 @@ const s02_rotationControlPoints = new Array(s02_maxDepth)
       .map((angle, index) => angle * Math.max(0, depth - index + 1)),
   }));
 
-const so02_whiteScaler = [1, 1, 1];
+// Colour scalers for colour variation (inverted)
 const s02_colorScaler = [
-  [0, 1, 1],
-  [0, 0, 1],
-  [1, 0, 1],
-  [1, 0, 0],
-  [1, 1, 0],
-  [1, 1, 1],
-  // #ff00b2 inverted
-  [0, 1, 1 - (1 / 255) * 178],
+  [0, 1, 1], // Red
+  [0, 0, 1], // Yellow
+  [1, 0, 1], // Green
+  [1, 0, 0], // Cyan
+  [1, 1, 0], // Blue
+  [1, 1, 1], // White
+  [0, 1, 1 - (1 / 255) * 178], //Magenta (#ff00b2 inverted)
 ];
 
+// === COLOUR CHOREOGRAPHY ===
+// Animation controller for the colour system
 s02_sceneChoreographies.push(
   new Choreography(
     {
@@ -249,6 +286,7 @@ s02_sceneChoreographies.push(
       center: s02_center,
     },
     [
+      // Depth render limit (controlled by axis 1)
       {
         attribute: "depthRenderLimit",
         axes: [1],
@@ -258,6 +296,7 @@ s02_sceneChoreographies.push(
           value: index ?? s02_maxDepth,
         })),
       },
+      // Divisions (controlled by axis 0 and axis 1)
       {
         attribute: "divisions",
         axes: [0, 1],
@@ -268,6 +307,7 @@ s02_sceneChoreographies.push(
         ],
         controlPoints: s02_circleDivisionControlPoints,
       },
+      // Scale (controlled by axis 0 and axis 1)
       {
         attribute: "scale",
         axes: [0, 1],
@@ -278,12 +318,14 @@ s02_sceneChoreographies.push(
         ],
         controlPoints: s02_circleScaleControlPoints,
       },
+      // Angles (controlled by axis 1)
       {
         attribute: "angles",
         axes: [1],
         transitions: ["smooth"],
         controlPoints: s02_rotationControlPoints,
       },
+      // Rotation amount (controlled by axis 2)
       {
         attribute: "rotationAmount",
         axes: [2],
@@ -292,6 +334,7 @@ s02_sceneChoreographies.push(
           { position: [0, 0, 0, 0], value: 0 },
           { position: [0, 0, 127, 0], value: 1 },
         ],
+        // Colour (controlled by axis 0 and axis 1)
       },
       {
         attribute: "color",
@@ -303,6 +346,7 @@ s02_sceneChoreographies.push(
         ],
         controlPoints: s02_circleColorControlPoints,
       },
+      // Tint (controlled by axis 3)
       {
         attribute: "tint",
         axes: [3],
@@ -313,6 +357,7 @@ s02_sceneChoreographies.push(
           { position: [0, 0, 0, 12], value: 1 },
         ],
       },
+      // Colour variation (controlled by axis 3)
       {
         attribute: "colorVariation",
         axes: [3],
@@ -324,6 +369,7 @@ s02_sceneChoreographies.push(
           { position: [0, 0, 0, 127], value: 0.125 },
         ],
       },
+      // Colour speed (controlled by axis 3)
       {
         attribute: "colorSpeed",
         axes: [3],
@@ -334,36 +380,42 @@ s02_sceneChoreographies.push(
         ],
       },
     ],
-    function () {
+    /**
+     * Animation render function
+     * @param {number} deltaTime - Delta time for the animation
+     */
+    function (deltaTime = 0.016) {
       const { circles, maxDepth, colorIndex, colorScaler, center } =
         this.element;
+
+      // Retrieve animation parameters
       const divisions = this.divisions;
       const depthRenderLimit = Math.floor(this.depthRenderLimit + 2);
       const scale = this.scale;
       const rotationAmount = this.rotationAmount;
       const angles = this.angles.map((angle) => angle * rotationAmount);
-
       const color = this.color;
       const tint = this.tint;
       const colorVariation = this.colorVariation;
-      const colorSpeed = this.colorSpeed ** 1.5 * 1.25;
-      // const rotation = this.rotation;
+      const colorSpeed = Math.max(0, this.colorSpeed) ** 1.5 * 1.25;
       const colorInterpolationExponent = 6;
       const colorDisparity = 0.75;
       const interpolationMode = "oklch";
 
-      // circles.forEach((circle) => project.activeLayer.addChild(circle));
-
+      // Update divided circles
       this.element.circlesDivided = this.element.circlesDivided.map(
         (oldGroup, depthIndex) => {
           const groupDepth = maxDepth - depthIndex;
+
+          // Remove old group if it exists
           if (oldGroup) oldGroup.remove();
+
+          // Skip rendering if hidden behind lower depths
           if (groupDepth > depthRenderLimit && groupDepth < maxDepth)
             return false;
-          // const rotationScale = 2 << (1 / scale[groupDepth - 1]);
 
+          // Generate fill colours for the segments
           const strokeArray = new Array(color[depthIndex].length).fill(0);
-
           const fillArray = color[depthIndex]
             .map((value, index) => {
               strokeArray[index] =
@@ -414,6 +466,7 @@ s02_sceneChoreographies.push(
             })
             .reverse();
 
+          // Create a new group for the divided circle
           const newGroup = new paper.Group({
             name: "circle-division",
             parent: s02_sceneGroup,
@@ -425,33 +478,46 @@ s02_sceneChoreographies.push(
             ),
             applyMatrix: false,
           });
-          newGroup.children.forEach((path, index) => {
+
+          // Update scaling and stroke width for each segment
+          newGroup.children.forEach((path) => {
             path.scaling = groupDepth < maxDepth ? scale[groupDepth - 1] : 4;
             path.strokeWidth = strokeArray[path.pathIndex] * path.thickness;
           });
 
-          // Sort the children by stroke width
-          // -> Ensures consistent stroke widths
+          // Sort the children by stroke width for consistent stroke widths
           const sortedChildren = newGroup.children
             .slice()
             .sort((a, b) => a.strokeWidth - b.strokeWidth);
           newGroup.removeChildren();
           sortedChildren.forEach((path) => newGroup.addChild(path));
+
+          // Apply rotation to the group
           newGroup.rotation = angles[groupDepth - 1];
           return newGroup;
         }
       );
-      // circles.forEach((circle) => circle.remove());
+
+      // Increment the colour index for animation
       this.element.colorIndex += deltaTime * colorSpeed;
     }
   )
 );
 
-const s02_scene = new Scene("colour", s02_sceneGroup, s02_sceneChoreographies);
+// === SCENE REGISTRATION ===
+// Create and register the scene with the scene manager
+const s02_scene = new Scene(
+  "scene-02-colour",
+  s02_sceneGroup,
+  s02_sceneChoreographies
+);
 sceneManager.addScene(s02_scene);
 
-// Delete variables that are no longer needed
+// === CLEANUP ===
+// Delete variables that are no longer needed to free memory
 delete s02_backgroundColor;
+delete s02_strokeColor;
+delete s02_circleStrokeWidth;
 delete s02_maxDepth;
 delete s02_maxColor;
 delete s02_center;
@@ -463,18 +529,4 @@ delete s02_circleRotationControlPoints;
 delete s02_circleColorControlPoints;
 delete s02_circlesDivided;
 delete s02_rotationControlPoints;
-delete so02_whiteScaler;
 delete s02_colorScaler;
-
-// Define the onFrame event handler for animation and interaction
-//   let lastInteractionTime = performance.now(); // Ensure this is defined
-//   view.onFrame = () => {
-//     updateAxes(deltaTime);
-//     s02_sceneChoreographies.forEach((sceneElement) => {
-//       sceneElement.update();
-//     });
-//   };
-//   s02_sceneChoreographies.forEach((sceneElement) => {
-//     sceneElement.update();
-//   });
-// }
